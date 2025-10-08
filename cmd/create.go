@@ -1,4 +1,3 @@
-// cmd/create.go
 package cmd
 
 import (

@@ -1,4 +1,3 @@
-// internal/semver/semver.go
 package semver
 
 import (

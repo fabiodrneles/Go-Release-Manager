@@ -1,4 +1,3 @@
-// internal/git/git.go
 package git
 
 import (
