@@ -23,8 +23,10 @@ func runCommand(name string, args ...string) (string, error) {
 func GetLatestTag() (string, error) {
 	tag, err := runCommand("git", "describe", "--tags", "--abbrev=0")
 	if err != nil {
-		// Se não houver tags, o git retorna um erro. Tratamos como "sem tag"
-		if strings.Contains(err.Error(), "no tags found") {
+		// ESTA É A CORREÇÃO:
+		// Se o erro do git for "no tags found" ou "cannot describe",
+		// nós não tratamos como um erro fatal. Em vez disso, retornamos "v0.0.0".
+		if strings.Contains(err.Error(), "no tags found") || strings.Contains(err.Error(), "cannot describe") {
 			return "v0.0.0", nil // Começamos do zero se não houver tags
 		}
 		return "", err
