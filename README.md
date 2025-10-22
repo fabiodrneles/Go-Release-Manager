@@ -14,5 +14,7 @@ Em projetos de software, o processo de criar uma nova versão é manual, repetit
 
 ## Instalação
 
-```bash
-go install [github.com/seu-usuario/go-release-manager@latest](https://github.com/seu-usuario/go-release-manager@latest)
+- Baixe o executável na ultima release, o arquivo go-release-manager.exe ( para sistema windows apenas até o momento ).
+- Coloque o executável dentro do seu projeto , aquele no qual quer construir a release.
+- No terminal rode o comando ```.\go-release-manager.exe``` para executar o programa.
+- Depois para criar uma release rode o comando ```.\go-release-manager.exe create --token "ghp_coloqueseutokendogithubaqui"```
