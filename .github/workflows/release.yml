@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Isso faz a Action rodar toda vez que uma tag 'v*' for empurrada
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessário para o GoReleaser ler o histórico
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # IMPORTANTE: Usando a versão do seu go.mod
+          go-version: 1.24 
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          # 'release' diz ao GoReleaser para anexar os binários
+          # na release que o SEU app acabou de criar.
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

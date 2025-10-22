@@ -9,14 +9,14 @@ import (
 	"go-release-manager/internal/provider"
 	"go-release-manager/internal/semver"
 
-	"github.com/fatih/color" // Importar
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 var (
-	token   string
-	dryRun  bool
-	repoURL string
+	token  string
+	dryRun bool
+	//repoURL string
 )
 
 var createCmd = &cobra.Command{
@@ -92,7 +92,6 @@ var createCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// --- ADIÇÕES AQUI ---
 	// Preenche os campos de ajuda com as cores
 	createCmd.Short = color.CyanString("Cria uma nova versão, tag e release.")
 	createCmd.Long = color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,

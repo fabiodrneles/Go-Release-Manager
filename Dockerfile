@@ -49,4 +49,4 @@ ENTRYPOINT ["/go-release-manager"]
 # Define um comando padrão (opcional, mas uma boa prática)
 # Se o usuário não passar nenhum argumento (como "create"),
 # o contêiner executará "go-release-manager --help".
-CMD ["--help"]
+CMD []
