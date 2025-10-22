@@ -26,8 +26,6 @@ func init() {
 	// Cor para a descrição (Branco Padrão)
 	cDesc := color.New(color.BgBlue)
 
-	// --- 2. Criar a arte ASCII ---
-	// (Use Sprintf para aplicar a cor em cada linha)
 	// Fonte: "Standard"
 	asciiArt := cTitle.Sprintf(`
 			ЯΣᄂΣΛƧΣ MΛПΛGΣЯ
