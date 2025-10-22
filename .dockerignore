@@ -1,0 +1,8 @@
+# Arquivo: .dockerignore
+
+# Ignorar binários compilados localmente
+go-release-manager.exe
+*.exe
+
+# Ignorar diretórios (ex: .git)
+.git
