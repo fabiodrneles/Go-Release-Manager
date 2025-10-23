@@ -38,35 +38,35 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 	highestIncrement := IncrementNone
 	var changelogEntries []string
 	for _, commit := range commits {
-		// --- MUDANÇA AQUI ---
-		// Agora 'feat' e 'BREAKING CHANGE' são verificados primeiro ou por último
+		// --- ESTA É A CORREÇÃO ---
+		// Limpa espaços em branco antes e depois da mensagem
+		cleanCommit := strings.TrimSpace(commit)
+		// --- FIM DA CORREÇÃO ---
 
-		if strings.Contains(commit, "BREAKING CHANGE") {
+		// Agora, todas as verificações usam 'cleanCommit'
+		if strings.Contains(cleanCommit, "BREAKING CHANGE") {
 			highestIncrement = IncrementMajor
-			changelogEntries = append(changelogEntries, fmt.Sprintf("- 💥 %s", commit))
+			changelogEntries = append(changelogEntries, fmt.Sprintf("- 💥 %s", cleanCommit))
 
-		} else if strings.HasPrefix(commit, "feat:") {
+		} else if strings.HasPrefix(cleanCommit, "feat:") {
 			if highestIncrement < IncrementMinor {
 				highestIncrement = IncrementMinor
 			}
-			changelogEntries = append(changelogEntries, fmt.Sprintf("- ✨ %s", commit))
+			changelogEntries = append(changelogEntries, fmt.Sprintf("- ✨ %s", cleanCommit))
 
-			// --- NOVA LÓGICA COMBINADA PARA 'PATCH' ---
-		} else if strings.HasPrefix(commit, "fix:") {
+		} else if strings.HasPrefix(cleanCommit, "fix:") {
 			if highestIncrement < IncrementPatch {
 				highestIncrement = IncrementPatch
 			}
-			changelogEntries = append(changelogEntries, fmt.Sprintf("- 🐛 %s", commit))
+			changelogEntries = append(changelogEntries, fmt.Sprintf("- BUG %s", cleanCommit))
 
-		} else if strings.HasPrefix(commit, "refactor:") { // <-- ADICIONADO
+		} else if strings.HasPrefix(cleanCommit, "refactor:") {
 			if highestIncrement < IncrementPatch {
 				highestIncrement = IncrementPatch
 			}
-			changelogEntries = append(changelogEntries, fmt.Sprintf("- 🔧 %s", commit))
+			changelogEntries = append(changelogEntries, fmt.Sprintf("- 🔧 %s", cleanCommit))
 		}
-		// Commits como 'chore:', 'docs:', 'test:' serão ignorados por enquanto
 	}
-	// --- FIM DA MUDANÇA ---
 
 	// 3. Calcular a nova versão
 	switch highestIncrement {
@@ -83,12 +83,21 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 
 	nextVersion := fmt.Sprintf("v%d.%d.%d", major, minor, patch)
 
-	var changelog string // Declara a variável changelog
+	var changelog string
 
 	// Se nenhum incremento for detectado, retorne a versão antiga e changelog vazio
 	if highestIncrement == IncrementNone {
 		changelog = "## Changelog\n\nNenhuma mudança detectada."
-		return latestTag, highestIncrement, changelog
+		// NOTA: Retornar latestTag aqui estava errado se a versão inicial for v0.0.0
+		// Se for o primeiro release, ele deve continuar e retornar nextVersion (ex: v0.0.1)
+		// Vamos simplificar a lógica de retorno para o final.
+		if latestTag == "v0.0.0" && highestIncrement == IncrementNone {
+			// Não há commits relevantes no primeiro release
+			return latestTag, highestIncrement, changelog
+		} else if highestIncrement == IncrementNone {
+			// Há commits, mas nenhum é relevante
+			return latestTag, highestIncrement, changelog
+		}
 	}
 
 	changelog = "## Changelog\n\n" + strings.Join(changelogEntries, "\n")
