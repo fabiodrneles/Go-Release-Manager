@@ -21,13 +21,14 @@ var (
 )
 
 var createCmd = &cobra.Command{
-	Use:     "create",
-	Short:   "", // Preenchido no init
-	Long:    "", // Preenchido no init
-	Example: "", // Preenchido no init
+	Use: "create",
+	// Preenchido no init
+	Short:   "",
+	Long:    "",
+	Example: "",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// --- 2. NOVA LÓGICA DE SEGURANÇA ---
+		// --- 2. LÓGICA DE SEGURANÇA ---
 		// Pega o token da flag.
 		// Se estiver vazio, tenta pegar da variável de ambiente.
 		if token == "" {
@@ -107,9 +108,12 @@ func init() {
 
 	// Preenche os campos de ajuda com as cores
 	createCmd.Short = color.CyanString("Cria uma nova versão, tag e release.") //
-	createCmd.Long = color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,
-cria e empurra a tag, e finalmente cria um release no provedor git (ex: GitHub).`) //
-	createCmd.Example = color.YellowString(`
+	createCmd.Long = color.WhiteString(
+		`Analisa os commits desde a última tag, determina a próxima versão semântica,
+		cria e empurra a tag, e finalmente cria um release no provedor git (ex: GitHub).
+		`)
+	createCmd.Example = color.YellowString(
+		`
   # Executa o comando lendo o token da variável de ambiente GITHUB_TOKEN
   go-release-manager create
 
