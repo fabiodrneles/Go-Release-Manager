@@ -2,6 +2,7 @@ package semver
 
 import (
 	"fmt"
+	"log" // <-- 1. ADICIONADO
 	"strconv"
 	"strings"
 )
@@ -38,12 +39,13 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 	highestIncrement := IncrementNone
 	var changelogEntries []string
 	for _, commit := range commits {
-		// --- ESTA É A CORREÇÃO ---
-		// Limpa espaços em branco antes e depois da mensagem
+		// Limpa espaços em branco e newlines do *início* e *fim* do corpo
 		cleanCommit := strings.TrimSpace(commit)
-		// --- FIM DA CORREÇÃO ---
 
-		// Agora, todas as verificações usam 'cleanCommit'
+		// --- 2. LINHA DE DEBUG ADICIONADA ---
+		log.Printf("Analisando commit (primeiros 50 chars): [%.50s]", cleanCommit)
+		// --- FIM DO DEBUG ---
+
 		if strings.Contains(cleanCommit, "BREAKING CHANGE") {
 			highestIncrement = IncrementMajor
 			changelogEntries = append(changelogEntries, fmt.Sprintf("- 💥 %s", cleanCommit))
@@ -85,19 +87,10 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 
 	var changelog string
 
-	// Se nenhum incremento for detectado, retorne a versão antiga e changelog vazio
 	if highestIncrement == IncrementNone {
 		changelog = "## Changelog\n\nNenhuma mudança detectada."
-		// NOTA: Retornar latestTag aqui estava errado se a versão inicial for v0.0.0
-		// Se for o primeiro release, ele deve continuar e retornar nextVersion (ex: v0.0.1)
-		// Vamos simplificar a lógica de retorno para o final.
-		if latestTag == "v0.0.0" && highestIncrement == IncrementNone {
-			// Não há commits relevantes no primeiro release
-			return latestTag, highestIncrement, changelog
-		} else if highestIncrement == IncrementNone {
-			// Há commits, mas nenhum é relevante
-			return latestTag, highestIncrement, changelog
-		}
+		// Retorna a tag antiga, pois não há incremento
+		return latestTag, highestIncrement, changelog
 	}
 
 	changelog = "## Changelog\n\n" + strings.Join(changelogEntries, "\n")

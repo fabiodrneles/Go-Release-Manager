@@ -23,11 +23,8 @@ func runCommand(name string, args ...string) (string, error) {
 func GetLatestTag() (string, error) {
 	tag, err := runCommand("git", "describe", "--tags", "--abbrev=0")
 	if err != nil {
-		// ESTA É A CORREÇÃO:
-		// Se o erro do git for "no tags found" ou "cannot describe",
-		// nós não tratamos como um erro fatal. Em vez disso, retornamos "v0.0.0".
 		if strings.Contains(err.Error(), "no tags found") || strings.Contains(err.Error(), "cannot describe") {
-			return "v0.0.0", nil // Começamos do zero se não houver tags
+			return "v0.0.0", nil
 		}
 		return "", err
 	}
@@ -36,19 +33,27 @@ func GetLatestTag() (string, error) {
 
 // GetCommitsSince retorna uma lista de mensagens de commit desde uma tag específica
 func GetCommitsSince(tag string) ([]string, error) {
-	// Se a tag for v0.0.0 (inicial), pegamos todos os commits
 	commitRange := fmt.Sprintf("%s..HEAD", tag)
 	if tag == "v0.0.0" {
 		commitRange = "HEAD"
 	}
-	out, err := runCommand("git", "log", commitRange, "--pretty=%s")
+
+	// --- ESTA É A MUDANÇA ---
+	// Em vez de --pretty=%s, usamos --pretty=format:%B%x00
+	// %B = Corpo inteiro do commit
+	// %x00 = O "NUL byte", um delimitador seguro que não existe em mensagens de commit
+	out, err := runCommand("git", "log", commitRange, "--pretty=format:%B%x00")
+	// --- FIM DA MUDANÇA ---
+
 	if err != nil {
 		return nil, err
 	}
 	if out == "" {
 		return []string{}, nil
 	}
-	return strings.Split(out, "\n"), nil
+
+	// Agora dividimos pelo NUL byte, e não por \n
+	return strings.Split(out, "\x00"), nil
 }
 
 // CreateTag cria uma nova tag git
@@ -69,12 +74,10 @@ func GetCurrentRepo() (owner, repo string, err error) {
 	if err != nil {
 		return "", "", err
 	}
-	// Converte URLs SSH (git@github.com:user/repo.git) para um formato mais fácil de parsear
 	if strings.HasPrefix(remoteURL, "git@") {
 		remoteURL = strings.Replace(remoteURL, ":", "/", 1)
 		remoteURL = strings.Replace(remoteURL, "git@", "https://", 1)
 	}
-	// Remove .git do final, se houver
 	remoteURL = strings.TrimSuffix(remoteURL, ".git")
 
 	parts := strings.Split(remoteURL, "/")
