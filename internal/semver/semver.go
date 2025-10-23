@@ -2,7 +2,7 @@ package semver
 
 import (
 	"fmt"
-	"log" // <-- 1. ADICIONADO
+	"log" // Mantenha o import de log
 	"strconv"
 	"strings"
 )
@@ -38,16 +38,22 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 	// 2. Determinar o nível de incremento baseado nos commits
 	highestIncrement := IncrementNone
 	var changelogEntries []string
+
+	log.Printf("Iniciando análise de %d commits...", len(commits)) // Log de início
+
 	for _, commit := range commits {
-		// Limpa espaços em branco e newlines do *início* e *fim* do corpo
 		cleanCommit := strings.TrimSpace(commit)
+		if cleanCommit == "" { // Ignora commits vazios (causados pelo split)
+			continue
+		}
 
-		// --- 2. LINHA DE DEBUG ADICIONADA ---
-		log.Printf("Analisando commit (primeiros 50 chars): [%.50s]", cleanCommit)
-		// --- FIM DO DEBUG ---
+		log.Printf("Analisando commit: [%.50s]", cleanCommit) // Log de cada commit
 
+		// Agora, todas as verificações usam 'cleanCommit'
 		if strings.Contains(cleanCommit, "BREAKING CHANGE") {
-			highestIncrement = IncrementMajor
+			if highestIncrement < IncrementMajor {
+				highestIncrement = IncrementMajor
+			}
 			changelogEntries = append(changelogEntries, fmt.Sprintf("- 💥 %s", cleanCommit))
 
 		} else if strings.HasPrefix(cleanCommit, "feat:") {
@@ -70,7 +76,14 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 		}
 	}
 
-	// 3. Calcular a nova versão
+	log.Printf("Análise concluída. Maior incremento: %s", highestIncrement)
+
+	// 3. Se nenhum incremento for encontrado, retorne
+	if highestIncrement == IncrementNone {
+		return latestTag, IncrementNone, "## Changelog\n\nNenhuma mudança detectada."
+	}
+
+	// 4. Calcular a nova versão
 	switch highestIncrement {
 	case IncrementMajor:
 		major++
@@ -84,16 +97,7 @@ func DetermineNextVersion(latestTag string, commits []string) (string, Increment
 	}
 
 	nextVersion := fmt.Sprintf("v%d.%d.%d", major, minor, patch)
-
-	var changelog string
-
-	if highestIncrement == IncrementNone {
-		changelog = "## Changelog\n\nNenhuma mudança detectada."
-		// Retorna a tag antiga, pois não há incremento
-		return latestTag, highestIncrement, changelog
-	}
-
-	changelog = "## Changelog\n\n" + strings.Join(changelogEntries, "\n")
+	changelog := "## Changelog\n\n" + strings.Join(changelogEntries, "\n")
 
 	return nextVersion, highestIncrement, changelog
 }
