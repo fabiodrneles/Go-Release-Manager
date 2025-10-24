@@ -43,7 +43,7 @@ func init() {
 
 	asciiArt := cTitle.Sprintf(`
 			ЯΣᄂΣΛƧΣ MΛПΛGΣЯ
-		`) // O seu ASCII art está aqui
+`) // O seu ASCII art está aqui
 
 	tagline := cTagline.Sprint("\n  Automatize seu versionamento e releases com Conventional Commits.")
 	description := cDesc.Sprint(`
