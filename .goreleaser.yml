@@ -1,4 +1,6 @@
 # .goreleaser.yml
+version: 2  # ADICIONE ISSO: versão 2 é obrigatória no GoReleaser v2+
+
 project_name: go-release-manager
 
 # -------------------------------
@@ -17,7 +19,6 @@ builds:
       - amd64
       - arm64
     ignore:
-      # Windows não suporta ARM64 nativamente
       - goos: windows
         goarch: arm64
     ldflags:
@@ -34,7 +35,7 @@ archives:
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
-      {{- title .OS }}_
+      {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
@@ -55,10 +56,10 @@ checksum:
   algorithm: sha256
 
 # -------------------------------
-# Snapshots (para --snapshot)
+# Snapshots
 # -------------------------------
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 
 # -------------------------------
 # Changelog
