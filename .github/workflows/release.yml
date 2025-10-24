@@ -15,8 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # fetch-depth: 0 ainda é importante para o GoReleaser ler o histórico
           fetch-depth: 0 
-          fetch-tags: true # <-- ESTA É A NOVA LINHA
+          # fetch-tags: true (Vamos manter por segurança, mas o 'ref' é a chave)
+          fetch-tags: true 
+          # --- ESTA É A NOVA LINHA CRUCIAL ---
+          # Diz ao checkout para usar a tag exata que acionou o workflow
+          ref: ${{ github.ref }} 
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -26,7 +31,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          # Alterado de --clean para --rm-dist (mais moderno)
+          # Usando --rm-dist (mais moderno que --clean)
           args: release --rm-dist 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
