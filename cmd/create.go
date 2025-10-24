@@ -3,9 +3,11 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 
-	"go-release-manager/internal/config" // <-- NOVO PACOTE IMPORTADO
+	// "os" // <-- REMOVIDO (movido para o pacote auth)
+
+	"go-release-manager/internal/auth"   // <-- NOVO PACOTE IMPORTADO
+	"go-release-manager/internal/config" // Importação existente
 	"go-release-manager/internal/git"
 	"go-release-manager/internal/semver"
 
@@ -14,7 +16,7 @@ import (
 )
 
 var (
-	// token string // <-- REMOVIDO (Conforme sua decisão)
+	// token string // <-- Já removido
 	dryRun            bool
 	preReleaseChannel string
 )
@@ -25,60 +27,61 @@ var createCmd = &cobra.Command{
 	Long: color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,
 cria e empurra a tag. O release do GitHub (com os binários) será criado automaticamente pela GitHub Action.`),
 
-	// --- EXEMPLO ATUALIZADO (Sem -t) ---
+	// --- EXEMPLO ATUALIZADO (com nova autenticação) ---
 	Example: color.YellowString(`
-  # Executa o comando (lê o token do GITHUB_TOKEN)
+  # Executa o comando (lê GITHUB_TOKEN ou token do 'gh')
   go-release-manager create
 
   # Simula o processo (dry-run)
   go-release-manager create -d
 
-  # Cria uma pré-release (ex: v1.3.0-beta.1)
+  # Cria uma pré-release
   go-release-manager create -p beta
 
   # Simula uma pré-release
-  # (O token deve estar na variável de ambiente GITHUB_TOKEN)
+  # (Autenticação é automática via GITHUB_TOKEN ou 'gh auth login')
   go-release-manager create -d -p rc
 `),
 	// --- FIM DA ATUALIZAÇÃO ---
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// --- LÓGICA DE SEGURANÇA (ATUALIZADA) ---
-		// Agora lê apenas da variável de ambiente. Mais seguro.
-		token := os.Getenv("GITHUB_TOKEN")
-		if token == "" {
-			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o pela variável de ambiente GITHUB_TOKEN."))
+		// --- LÓGICA DE AUTENTICAÇÃO (ATUALIZADA) ---
+		// Tenta GITHUB_TOKEN, e se falhar, tenta 'gh auth token'
+		// O token em si não é usado diretamente aqui, mas o 'gh' configura o git.
+		// A verificação é crucial para falhar rápido se nenhuma auth estiver disponível.
+		_, err := auth.GetToken()
+		if err != nil {
+			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o pela variável de ambiente GITHUB_TOKEN, ou faça login com o GitHub CLI (`gh auth login`).\nErro original: %v", err))
 		}
-		// --- FIM DA LÓGICA DE SEGURANÇA ---
+		// --- FIM DA LÓGICA DE AUTENTICAÇÃO ---
 
-		// --- CARREGAR CONFIGURAÇÃO (NOVO) ---
+		// --- CARREGAR CONFIGURAÇÃO (Intacto) ---
 		cfg, err := config.LoadConfig()
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao carregar configuração .go-releaserc.yml: %v"), err)
 		}
 		// --- FIM DO CARREGAMENTO ---
 
-		// 1. Obter a última tag (INTACTA)
+		// 1. Obter a última tag (Intacto)
 		latestTag, err := git.GetLatestTag()
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao obter a última tag: %v"), err)
 		}
 		log.Printf(color.GreenString("Última versão encontrada: %s"), latestTag)
 
-		// 2. Obter commits (INTACTA)
+		// 2. Obter commits (Intacto)
 		commits, err := git.GetCommitsSince(latestTag)
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao obter commits: %v"), err)
 		}
 		log.Printf("Analisando %d commits desde a tag %s...", len(commits), latestTag)
 
-		// --- 3. DETERMINAR A PRÓXIMA VERSÃO (ATUALIZADO) ---
+		// 3. DETERMINAR A PRÓXIMA VERSÃO (Intacto)
 		if preReleaseChannel != "" {
 			log.Printf(color.CyanString("Modo de pré-release ativado. Canal: %s"), preReleaseChannel)
 		}
 
-		// A chamada agora passa o 'cfg' carregado.
 		nextVersion, increment, err := semver.DetermineNextVersion(cfg, latestTag, commits, preReleaseChannel)
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao determinar a próxima versão: %v"), err)
@@ -125,28 +128,26 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// --- ATUALIZADO (Exemplos sem -t) ---
+	// --- ATUALIZADO (Exemplos com nova auth) ---
 	createCmd.Example = color.YellowString(
 		`
-  # Executa o comando (lê o token do GITHUB_TOKEN)
+  # Executa o comando (lê GITHUB_TOKEN ou token do 'gh')
   go-release-manager create
 
   # Simula o processo (dry-run)
   go-release-manager create -d
 
-  # Cria uma pré-release (ex: v1.3.0-beta.1)
+  # Cria uma pré-release
   go-release-manager create -p beta
 
   # Simula uma pré-release
-  # (O token deve estar na variável de ambiente GITHUB_TOKEN)
+  # (Autenticação é automática via GITHUB_TOKEN ou 'gh auth login')
   go-release-manager create -d -p rc
 `)
 	// --- FIM DA ATUALIZAÇÃO ---
 
-	// --- FLAGS ATUALIZADAS (com short-hands) ---
-
+	// --- FLAGS (Intactas) ---
 	// Flag de Token (REMOVIDA)
-	// createCmd.Flags().StringVarP(&token, "token", "t", "", "Token de Acesso Pessoal (PAT) do GitHub. (Padrão: variável de ambiente GITHUB_TOKEN)")
 
 	// Flag de Dry-Run (Intacta)
 	createCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Simula o processo sem criar tags ou releases")
