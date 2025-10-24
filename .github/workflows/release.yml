@@ -3,10 +3,10 @@ name: Release
 on:
   push:
     tags:
-      - 'v*' # Isso faz a Action rodar toda vez que uma tag 'v*' for empurrada
+      - 'v*' # Acionado por tags v*
 
 permissions:
-  contents: write # <-- Isto está correto e é necessário
+  contents: write # Necessário para criar o release
 
 jobs:
   goreleaser:
@@ -15,23 +15,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # fetch-depth: 0 ainda é importante para o GoReleaser ler o histórico
-          fetch-depth: 0 
-          # fetch-tags: true (Vamos manter por segurança, mas o 'ref' é a chave)
-          fetch-tags: true 
-          # --- ESTA É A NOVA LINHA CRUCIAL ---
-          # Diz ao checkout para usar a tag exata que acionou o workflow
-          ref: ${{ github.ref }} 
+          # fetch-depth: 0 é crucial para o GoReleaser ler o histórico para o changelog
+          fetch-depth: 0
+          # REMOVIDO: fetch-tags: true
+          # REMOVIDO: ref: ${{ github.ref }}
+          # Vamos confiar no comportamento padrão da action checkout@v4
+          # quando acionada por um evento de tag.
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24 
+          go-version: 1.24 # Confirma que é a versão do teu go.mod
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          # Usando --rm-dist (mais moderno que --clean)
-          args: release --rm-dist 
+          # args: release --rm-dist (ou --clean, ambos funcionam)
+          args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
