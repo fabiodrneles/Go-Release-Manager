@@ -23,8 +23,8 @@ builds:
         goarch: arm64
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
+      - -X go-release-manager.version={{.Version}}
+      - -X go-release-manager.commit={{.Commit}}
 
 # -------------------------------
 # Arquivos (APENAS UM archive!)
