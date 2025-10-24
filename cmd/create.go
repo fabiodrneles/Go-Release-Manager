@@ -7,7 +7,7 @@ import (
 
 	"go-release-manager/internal/git"
 	// "go-release-manager/internal/provider" // <-- REMOVIDO (não vamos mais criar o release aqui)
-	"go-release-manager/internal/semver"
+	"go-release-manager/internal/semver" // <-- Importação intacta
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -20,8 +20,7 @@ var (
 )
 
 var createCmd = &cobra.Command{
-	Use: "create",
-	// --- ATUALIZADO ---
+	Use:   "create",
 	Short: color.CyanString("Cria e empurra uma nova tag semântica."),
 	Long: color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,
 cria e empurra a tag. O release do GitHub (com os binários) será criado automaticamente pela GitHub Action.`),
@@ -33,7 +32,6 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
   # Executa em modo "dry run" (simulação) para ver a tag que será criada
   go-release-manager create --dry-run
 `),
-	// --- FIM DA ATUALIZAÇÃO ---
 
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -60,20 +58,26 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		}
 		log.Printf("Analisando %d commits desde a tag %s...", len(commits), latestTag)
 
-		// 3. Determinar a próxima versão (INTACTA)
-		nextVersion, increment, changelog := semver.DetermineNextVersion(latestTag, commits)
+		// --- 3. DETERMINAR A PRÓXIMA VERSÃO (ATUALIZADO) ---
+		// A variável 'changelog' foi removida, pois esta lógica agora
+		// pertence exclusivamente ao GoReleaser.
+		nextVersion, increment := semver.DetermineNextVersion(latestTag, commits)
+
 		if increment == semver.IncrementNone {
 			log.Println(color.YellowString("Nenhuma mudança relevante encontrada (feat, fix, BREAKING CHANGE). Nenhum release será criado."))
 			return
 		}
 		log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), increment, nextVersion)
 
-		// 4. Se for --dry-run (INTACTA)
+		// --- 4. SE FOR --dry-run (ATUALIZADO) ---
+		// O dry-run foi simplificado para focar na *decisão* da versão,
+		// não na geração de um changelog duplicado.
 		if dryRun {
 			fmt.Println(color.CyanString("\n--- MODO DRY RUN (SIMULAÇÃO) ---"))
+			fmt.Printf("Última tag encontrada: %s\n", latestTag)
+			fmt.Printf("Commits analisados: %d\n", len(commits))
+			fmt.Printf("Decisão de incremento: %s\n", color.MagentaString(increment.String()))
 			fmt.Printf("A nova tag a ser criada seria: %s\n", color.MagentaString(nextVersion))
-			fmt.Println("Changelog que será gerado pelo GoReleaser:") // Mensagem atualizada
-			fmt.Println(changelog)
 			fmt.Println(color.CyanString("--- FIM DO DRY RUN ---"))
 			return
 		}
@@ -89,25 +93,12 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 			log.Fatalf(color.RedString("Erro ao empurrar tag: %v"), err)
 		}
 
-		// --- 6. CRIAR O RELEASE NO PROVEDOR (REMOVIDO) ---
+		// --- 6. CRIAR O RELEASE NO PROVEDOR (INTACTO, JÁ REMOVIDO) ---
 		/*
-			log.Printf("Criando release '%s' no GitHub...", nextVersion)
-			owner, repoName, err := git.GetCurrentRepo()
-			if err != nil {
-				log.Fatalf(color.RedString("Não foi possível extrair o dono e nome do repositório da URL remota: %v"), err)
-			}
-
-			ctx := context.Background()
-			githubProvider := provider.NewGitHubProvider(ctx, token, owner, repoName)
-
-			releaseURL, err := githubProvider.CreateRelease(ctx, nextVersion, changelog)
-			if err != nil {
-				log.Fatalf(color.RedString("Erro ao criar release no GitHub: %v"), err)
-			}
+			... (Esta seção já estava corretamente comentada) ...
 		*/
-		// --- FIM DA REMOÇÃO ---
 
-		// --- NOVA MENSAGEM DE SUCESSO ---
+		// --- NOVA MENSAGEM DE SUCESSO (INTACTA) ---
 		log.Printf(color.GreenString("✅ Tag %s criada e empurrada com sucesso!"), nextVersion)
 		log.Println(color.CyanString("A GitHub Action 'Release' foi acionada. Verifique seu repositório em alguns minutos para os binários."))
 	},
@@ -116,7 +107,7 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// --- ATUALIZADO ---
+	// --- ATUALIZADO (INTACTO, JÁ CORRETO) ---
 	createCmd.Short = color.CyanString("Cria e empurra uma nova tag semântica.")
 	createCmd.Long = color.WhiteString(
 		`Analisa os commits desde a última tag, determina a próxima versão semântica,
@@ -133,7 +124,7 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 `)
 	// --- FIM DA ATUALIZAÇÃO ---
 
-	// Flags (INTACTAS, exceto pela remoção do MarkFlagRequired)
+	// Flags (INTACTAS)
 	createCmd.Flags().StringVarP(&token, "token", "t", "", "Token de Acesso Pessoal (PAT) do GitHub. (Padrão: variável de ambiente GITHUB_TOKEN)")
 	createCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Simula o processo sem criar tags ou releases")
 }

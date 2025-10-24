@@ -1,7 +1,7 @@
 # --- Estágio 1: Builder ---
 # Usamos uma imagem oficial do Go (baseada em Alpine para ser mais leve)
 # Dê um nome a este estágio, como "builder", para que possamos nos referir a ele mais tarde.
-FROM golang:1.24-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 # Define o diretório de trabalho dentro do contêiner
 WORKDIR /app
