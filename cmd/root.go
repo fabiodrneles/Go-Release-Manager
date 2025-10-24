@@ -6,7 +6,6 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	//"github.com/charmbracelet/lipgloss"
 )
 
 var rootCmd = &cobra.Command{
@@ -14,18 +13,6 @@ var rootCmd = &cobra.Command{
 	Short: "", // Será preenchido no init
 	Long:  "", // Será preenchido no init
 }
-
-/*
-var style = lipgloss.NewStyle().
-	Bold(true).
-	Foreground(lipgloss.Color("#00FFFF")).
-	BorderStyle(lipgloss.RoundedBorder()).
-	Padding(1, 2)
-
-asciiArt := style.Render(`
-    ЯΣᄂΣΛƧΣ MΛПΛGΣЯ
-`)
-*/
 
 func init() {
 	color.NoColor = false
@@ -38,14 +25,6 @@ func init() {
 
 	// Cor para a descrição (Branco Padrão)
 	cDesc := color.New(color.FgBlue)
-
-	// Fonte: "Standard"
-	/*
-	   	asciiArt := cTitle.Sprintf(`
-	   			ЯΣᄂΣΛƧΣ MΛПΛGΣЯ
-	   `)
-	*/
-	//ascii := ui.Box.Render(`
 
 	asciiArt := cTitle.Sprintf(`
 	   
