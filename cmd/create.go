@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"go-release-manager/internal/config" // <-- NOVO PACOTE IMPORTADO
 	"go-release-manager/internal/git"
 	"go-release-manager/internal/semver"
 
@@ -13,7 +14,7 @@ import (
 )
 
 var (
-	token             string
+	// token string // <-- REMOVIDO (Conforme sua decisão)
 	dryRun            bool
 	preReleaseChannel string
 )
@@ -24,7 +25,7 @@ var createCmd = &cobra.Command{
 	Long: color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,
 cria e empurra a tag. O release do GitHub (com os binários) será criado automaticamente pela GitHub Action.`),
 
-	// --- EXEMPLO ATUALIZADO (com flags curtas) ---
+	// --- EXEMPLO ATUALIZADO (Sem -t) ---
 	Example: color.YellowString(`
   # Executa o comando (lê o token do GITHUB_TOKEN)
   go-release-manager create
@@ -35,21 +36,28 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
   # Cria uma pré-release (ex: v1.3.0-beta.1)
   go-release-manager create -p beta
 
-  # Simula uma pré-release com token
-  go-release-manager create -d -p rc -t $GITHUB_TOKEN
+  # Simula uma pré-release
+  # (O token deve estar na variável de ambiente GITHUB_TOKEN)
+  go-release-manager create -d -p rc
 `),
 	// --- FIM DA ATUALIZAÇÃO ---
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// --- LÓGICA DE SEGURANÇA (INTACTA) ---
+		// --- LÓGICA DE SEGURANÇA (ATUALIZADA) ---
+		// Agora lê apenas da variável de ambiente. Mais seguro.
+		token := os.Getenv("GITHUB_TOKEN")
 		if token == "" {
-			token = os.Getenv("GITHUB_TOKEN")
-		}
-		if token == "" {
-			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o via flag -t ou pela variável de ambiente GITHUB_TOKEN."))
+			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o pela variável de ambiente GITHUB_TOKEN."))
 		}
 		// --- FIM DA LÓGICA DE SEGURANÇA ---
+
+		// --- CARREGAR CONFIGURAÇÃO (NOVO) ---
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			log.Fatalf(color.RedString("Erro ao carregar configuração .go-releaserc.yml: %v"), err)
+		}
+		// --- FIM DO CARREGAMENTO ---
 
 		// 1. Obter a última tag (INTACTA)
 		latestTag, err := git.GetLatestTag()
@@ -65,18 +73,19 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		}
 		log.Printf("Analisando %d commits desde a tag %s...", len(commits), latestTag)
 
-		// 3. DETERMINAR A PRÓXIMA VERSÃO (INTACTA)
+		// --- 3. DETERMINAR A PRÓXIMA VERSÃO (ATUALIZADO) ---
 		if preReleaseChannel != "" {
 			log.Printf(color.CyanString("Modo de pré-release ativado. Canal: %s"), preReleaseChannel)
 		}
 
-		nextVersion, increment, err := semver.DetermineNextVersion(latestTag, commits, preReleaseChannel)
+		// A chamada agora passa o 'cfg' carregado.
+		nextVersion, increment, err := semver.DetermineNextVersion(cfg, latestTag, commits, preReleaseChannel)
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao determinar a próxima versão: %v"), err)
 		}
 
 		if increment == semver.IncrementNone {
-			log.Println(color.YellowString("Nenhuma mudança relevante encontrada (feat, fix, BREAKING CHANGE). Nenhum release será criado."))
+			log.Println(color.YellowString("Nenhuma mudança relevante encontrada (feat, fix, BREAKING CHANGE, etc.). Nenhum release será criado."))
 			return
 		}
 		log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), increment, nextVersion)
@@ -116,7 +125,7 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// --- ATUALIZADO (Exemplos) ---
+	// --- ATUALIZADO (Exemplos sem -t) ---
 	createCmd.Example = color.YellowString(
 		`
   # Executa o comando (lê o token do GITHUB_TOKEN)
@@ -128,19 +137,20 @@ func init() {
   # Cria uma pré-release (ex: v1.3.0-beta.1)
   go-release-manager create -p beta
 
-  # Simula uma pré-release com token
-  go-release-manager create -d -p rc -t $GITHUB_TOKEN
+  # Simula uma pré-release
+  # (O token deve estar na variável de ambiente GITHUB_TOKEN)
+  go-release-manager create -d -p rc
 `)
 	// --- FIM DA ATUALIZAÇÃO ---
 
 	// --- FLAGS ATUALIZADAS (com short-hands) ---
 
-	// Flag de Token (Intacta, já tinha o '-t')
-	createCmd.Flags().StringVarP(&token, "token", "t", "", "Token de Acesso Pessoal (PAT) do GitHub. (Padrão: variável de ambiente GITHUB_TOKEN)")
+	// Flag de Token (REMOVIDA)
+	// createCmd.Flags().StringVarP(&token, "token", "t", "", "Token de Acesso Pessoal (PAT) do GitHub. (Padrão: variável de ambiente GITHUB_TOKEN)")
 
-	// Flag de Dry-Run (Adicionado '-d')
+	// Flag de Dry-Run (Intacta)
 	createCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Simula o processo sem criar tags ou releases")
 
-	// Flag de Pré-Release (Adicionado '-p')
+	// Flag de Pré-Release (Intacta)
 	createCmd.Flags().StringVarP(&preReleaseChannel, "pre-release", "p", "", "Cria uma pré-release com o canal especificado (ex: beta, rc)")
 }
