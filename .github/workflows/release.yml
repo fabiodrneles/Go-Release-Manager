@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*' # Isso faz a Action rodar toda vez que uma tag 'v*' for empurrada
+permissions:
+  contents: write
 
 jobs:
   goreleaser:
