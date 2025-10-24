@@ -8,8 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// --- NOVO ---
-// Variáveis para armazenar a informação de versão vinda do main.go
+// --- NOVO (Intacto) ---
 var (
 	appVersion = "dev"
 	appCommit  = "none"
@@ -24,34 +23,27 @@ func SetVersionInfo(version, commit string) {
 // --- FIM DO NOVO ---
 
 var rootCmd = &cobra.Command{
-	Use:   "go-release-manager",
-	Short: "", // Será preenchido no init
-	Long:  "", // Será preenchido no init
-	// --- NOVO ---
-	// Desabilita o comando padrão 'version' do Cobra, pois criaremos o nosso
-	Version: " ", // Um espaço em branco desabilita
+	Use:     "go-release-manager",
+	Short:   "",
+	Long:    "",
+	Version: " ",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Se nenhuma flag for passada (além de --version), mostra a ajuda
 		if cmd.Flags().NFlag() == 0 && len(args) == 0 {
 			return cmd.Help()
 		}
-		// Se --version foi passado, o PersistentPreRun já tratou.
-		// Se outro comando foi chamado (ex: 'create'), ele será executado.
 		return nil
 	},
-	// --- FIM DO NOVO ---
 }
 
 func init() {
 	color.NoColor = false
 	cTitle := color.New(color.FgCyan, color.Bold)
 	cTagline := color.New(color.FgYellow)
-	cDesc := color.New(color.BgBlue)
+	cDesc := color.New(color.FgBlue)
 
-	// ASCII Art (Intacto)
 	asciiArt := cTitle.Sprintf(`
 			ЯΣᄂΣΛƧΣ MΛПΛGΣЯ
-`) // Use ` em vez de ' para strings multi-linha
+		`) // O seu ASCII art está aqui
 
 	tagline := cTagline.Sprint("\n  Automatize seu versionamento e releases com Conventional Commits.")
 	description := cDesc.Sprint(`
@@ -61,13 +53,12 @@ func init() {
 	rootCmd.Short = color.CyanString("Uma CLI para automatizar o versionamento semântico e releases.")
 	rootCmd.Long = fmt.Sprintf("%s\n%s\n%s", asciiArt, tagline, description)
 
-	// --- NOVO ---
 	// Adiciona a flag --version/-v
 	var showVersion bool
-	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Exibe a versão da aplicação")
+	// Note que a flag está declarada como Persistente para funcionar em qualquer subcomando
+	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "Exibe a versão da aplicação")
 
 	// Usamos PersistentPreRunE para verificar a flag *antes* de executar qualquer comando.
-	// Se -v ou --version for encontrado, ele imprime a versão e *sai* do programa.
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if showVersion {
 			fmt.Printf("go-release-manager version %s (commit: %s)\n", appVersion, appCommit)
@@ -75,7 +66,6 @@ func init() {
 		}
 		return nil // Continua a execução normal se a flag não foi usada
 	}
-	// --- FIM DO NOVO ---
 }
 
 func Execute() {
