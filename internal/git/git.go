@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"sort" // <-- NOVO PACOTE IMPORTADO
 	"strings"
+
+	"github.com/Masterminds/semver/v3" // <-- NOVO PACOTE IMPORTADO (precisará de 'go mod tidy')
 )
 
 // runCommand é uma função helper para executar comandos no shell
@@ -38,12 +41,9 @@ func GetCommitsSince(tag string) ([]string, error) {
 		commitRange = "HEAD"
 	}
 
-	// --- ESTA É A MUDANÇA ---
-	// Em vez de --pretty=%s, usamos --pretty=format:%B%x00
 	// %B = Corpo inteiro do commit
-	// %x00 = O "NUL byte", um delimitador seguro que não existe em mensagens de commit
+	// %x00 = O "NUL byte", um delimitador seguro
 	out, err := runCommand("git", "log", commitRange, "--pretty=format:%B%x00")
-	// --- FIM DA MUDANÇA ---
 
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func GetCommitsSince(tag string) ([]string, error) {
 		return []string{}, nil
 	}
 
-	// Agora dividimos pelo NUL byte, e não por \n
+	// Agora dividimos pelo NUL byte
 	return strings.Split(out, "\x00"), nil
 }
 
@@ -87,4 +87,47 @@ func GetCurrentRepo() (owner, repo string, err error) {
 	owner = parts[len(parts)-2]
 	repo = parts[len(parts)-1]
 	return owner, repo, nil
+}
+
+// --- NOVO ---
+// GetLatestPreReleaseTag encontra a tag de pre-release mais recente para uma
+// versão estável e um canal específico.
+// Ex: baseVersion = "v1.3.0", channel = "beta"
+// Ele procura por "v1.3.0-beta.1", "v1.3.0-beta.2", etc., e retorna a mais alta.
+func GetLatestPreReleaseTag(baseVersion string, channel string) (string, error) {
+	pattern := fmt.Sprintf("%s-%s.*", baseVersion, channel)
+	out, err := runCommand("git", "tag", "--list", pattern, "--sort=v:refname")
+	if err != nil {
+		return "", err // Erro ao executar o 'git tag'
+	}
+
+	if out == "" {
+		return "", nil // Nenhuma tag encontrada, não é um erro
+	}
+
+	tags := strings.Split(out, "\n")
+	if len(tags) == 0 {
+		return "", nil // Nenhuma tag encontrada
+	}
+
+	// Para garantir a ordenação correta, usamos uma biblioteca de semver
+	// (A ordenação do Git é boa, mas lexical. 'v1.0.0-beta.10' < 'v1.0.0-beta.2')
+	// Vamos usar uma biblioteca de semver para garantir.
+	vs := make([]*semver.Version, 0)
+	for _, r := range tags {
+		v, err := semver.NewVersion(r)
+		if err == nil {
+			vs = append(vs, v)
+		}
+	}
+
+	if len(vs) == 0 {
+		return "", nil // Nenhuma tag válida encontrada
+	}
+
+	// Ordena as versões
+	sort.Sort(semver.Collection(vs))
+
+	// Retorna a última (mais alta)
+	return vs[len(vs)-1].String(), nil
 }

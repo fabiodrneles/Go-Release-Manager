@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/fatih/color v1.18.0
 	github.com/google/go-github/v55 v55.0.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

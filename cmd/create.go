@@ -6,17 +6,16 @@ import (
 	"os"
 
 	"go-release-manager/internal/git"
-	// "go-release-manager/internal/provider" // <-- REMOVIDO (não vamos mais criar o release aqui)
-	"go-release-manager/internal/semver" // <-- Importação intacta
+	"go-release-manager/internal/semver"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 var (
-	token  string
-	dryRun bool
-	//repoURL string
+	token             string
+	dryRun            bool
+	preReleaseChannel string // <-- NOVA VARIÁVEL
 )
 
 var createCmd = &cobra.Command{
@@ -24,6 +23,8 @@ var createCmd = &cobra.Command{
 	Short: color.CyanString("Cria e empurra uma nova tag semântica."),
 	Long: color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,
 cria e empurra a tag. O release do GitHub (com os binários) será criado automaticamente pela GitHub Action.`),
+
+	// --- EXEMPLO ATUALIZADO ---
 	Example: color.YellowString(`
   # Executa o comando (lê o token do GITHUB_TOKEN)
   # A ferramenta irá criar e empurrar a tag, acionando o GoReleaser no GitHub.
@@ -31,7 +32,11 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 
   # Executa em modo "dry run" (simulação) para ver a tag que será criada
   go-release-manager create --dry-run
+
+  # Cria uma pré-release (ex: v1.3.0-beta.1)
+  go-release-manager create --pre-release beta
 `),
+	// --- FIM DA ATUALIZAÇÃO ---
 
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -59,9 +64,15 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		log.Printf("Analisando %d commits desde a tag %s...", len(commits), latestTag)
 
 		// --- 3. DETERMINAR A PRÓXIMA VERSÃO (ATUALIZADO) ---
-		// A variável 'changelog' foi removida, pois esta lógica agora
-		// pertence exclusivamente ao GoReleaser.
-		nextVersion, increment := semver.DetermineNextVersion(latestTag, commits)
+		if preReleaseChannel != "" {
+			log.Printf(color.CyanString("Modo de pré-release ativado. Canal: %s"), preReleaseChannel)
+		}
+
+		// A chamada agora passa 'preReleaseChannel' e espera um 'err'.
+		nextVersion, increment, err := semver.DetermineNextVersion(latestTag, commits, preReleaseChannel)
+		if err != nil { // <-- NOVO TRATAMENTO DE ERRO
+			log.Fatalf(color.RedString("Erro ao determinar a próxima versão: %v"), err)
+		}
 
 		if increment == semver.IncrementNone {
 			log.Println(color.YellowString("Nenhuma mudança relevante encontrada (feat, fix, BREAKING CHANGE). Nenhum release será criado."))
@@ -70,11 +81,13 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), increment, nextVersion)
 
 		// --- 4. SE FOR --dry-run (ATUALIZADO) ---
-		// O dry-run foi simplificado para focar na *decisão* da versão,
-		// não na geração de um changelog duplicado.
+		// O dry-run agora mostra o canal de pré-release
 		if dryRun {
 			fmt.Println(color.CyanString("\n--- MODO DRY RUN (SIMULAÇÃO) ---"))
 			fmt.Printf("Última tag encontrada: %s\n", latestTag)
+			if preReleaseChannel != "" {
+				fmt.Printf("Canal de pré-release: %s\n", preReleaseChannel)
+			}
 			fmt.Printf("Commits analisados: %d\n", len(commits))
 			fmt.Printf("Decisão de incremento: %s\n", color.MagentaString(increment.String()))
 			fmt.Printf("A nova tag a ser criada seria: %s\n", color.MagentaString(nextVersion))
@@ -94,9 +107,6 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		}
 
 		// --- 6. CRIAR O RELEASE NO PROVEDOR (INTACTO, JÁ REMOVIDO) ---
-		/*
-			... (Esta seção já estava corretamente comentada) ...
-		*/
 
 		// --- NOVA MENSAGEM DE SUCESSO (INTACTA) ---
 		log.Printf(color.GreenString("✅ Tag %s criada e empurrada com sucesso!"), nextVersion)
@@ -107,12 +117,13 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 func init() {
 	rootCmd.AddCommand(createCmd)
 
-	// --- ATUALIZADO (INTACTO, JÁ CORRETO) ---
+	// --- ATUALIZADO (Short/Long intactos) ---
 	createCmd.Short = color.CyanString("Cria e empurra uma nova tag semântica.")
 	createCmd.Long = color.WhiteString(
 		`Analisa os commits desde a última tag, determina a próxima versão semântica,
 cria e empurra a tag. O release do GitHub (com os binários) será criado automaticamente pela GitHub Action.
 `)
+	// --- EXEMPLO ATUALIZADO ---
 	createCmd.Example = color.YellowString(
 		`
   # Executa o comando (lê o token do GITHUB_TOKEN)
@@ -121,10 +132,19 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 
   # Executa em modo "dry run" (simulação) para ver a tag que será criada
   go-release-manager create --dry-run
+
+  # Cria uma pré-release (ex: v1.3.0-beta.1)
+  go-release-manager create --pre-release beta
+
+  # Simula uma pré-release
+  go-release-manager create --dry-run --pre-release rc
 `)
 	// --- FIM DA ATUALIZAÇÃO ---
 
 	// Flags (INTACTAS)
 	createCmd.Flags().StringVarP(&token, "token", "t", "", "Token de Acesso Pessoal (PAT) do GitHub. (Padrão: variável de ambiente GITHUB_TOKEN)")
 	createCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Simula o processo sem criar tags ou releases")
+
+	// --- NOVA FLAG ---
+	createCmd.Flags().StringVar(&preReleaseChannel, "pre-release", "", "Cria uma pré-release com o canal especificado (ex: beta, rc). Gera tags como vX.Y.Z-canal.N")
 }
