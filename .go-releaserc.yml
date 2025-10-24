@@ -1,7 +1,67 @@
+# -----------------------------------------------------------------
+# Arquivo de Configuração do Go Release Manager (.go-releaserc.yml)
+# -----------------------------------------------------------------
+#
+# Defina aqui quais tipos de commit devem acionar um novo release.
+#
+# Opções de 'release':
+#   "major"  - (vX.y.z -> v(X+1).0.0) - USADO APENAS PARA BREAKING CHANGES
+#   "minor"  - (v1.X.y -> v1.(X+1).0) - Para novas features
+#   "patch"  - (v1.2.X -> v1.2.(X+1)) - Para correções de bugs
+#   "none"   - (v1.2.3 -> v1.2.3)     - Não aciona um release
+#
+# NOTA: BREAKING CHANGES (com '!' ou footer) sempre acionarão um
+# release 'major', independentemente do tipo de commit.
+#
+# -----------------------------------------------------------------
+
 releaseRules:
-  - type: "docs"
-    release: "patch"
+  # --- Tipos que GERAM release (Padrão SemVer) ---
+
   - type: "feat"
-    release: "minor"
+    release: "minor" # Uma nova funcionalidade = minor
+
   - type: "fix"
-    release: "patch"
+    release: "patch" # Uma correção de bug = patch
+
+  # --- Tipos que NÃO GERAM release (Padrão) ---
+  # Estes tipos são para organização interna e não afetam
+  # o usuário final, por isso não geram uma nova versão.
+
+  - type: "docs"
+    release: "none" # Mudanças na documentação
+
+  - type: "style"
+    release: "none" # Mudanças de formatação (espaços, ponto e vírgula, etc)
+
+  - type: "refactor"
+    release: "none" # Refatoração de código que não corrige bug nem add feature
+
+  - type: "perf"
+    release: "none" # Uma mudança de código que melhora a performance
+
+  - type: "test"
+    release: "none" # Adicionando testes ou corrigindo testes existentes
+
+  - type: "build"
+    release: "none" # Mudanças que afetam o sistema de build ou dependências
+
+  - type: "ci"
+    release: "none" # Mudanças nos arquivos de CI (ex: GitHub Actions)
+
+  - type: "chore"
+    release: "none" # Outras mudanças que não modificam o código (ex: .gitignore)
+
+# -----------------------------------------------------------------
+# EXEMPLO DE PERSONALIZAÇÃO (Resolvendo seu problema anterior):
+#
+# Se você quisesse que 'docs' e 'refactor' gerassem um 'patch'
+# (como você queria antes), você simplesmente mudaria as regras:
+#
+# - type: "docs"
+#   release: "patch"
+#
+# - type: "refactor"
+#   release: "patch"
+#
+# -----------------------------------------------------------------
