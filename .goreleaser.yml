@@ -1,6 +1,4 @@
 # .goreleaser.yml
-version: 2  # ADICIONE ISSO: versão 2 é obrigatória no GoReleaser v2+
-
 project_name: go-release-manager
 
 # -------------------------------
@@ -19,12 +17,15 @@ builds:
       - amd64
       - arm64
     ignore:
+      # Windows não suporta ARM64 nativamente
       - goos: windows
         goarch: arm64
     ldflags:
       - -s -w
-      - -X main.version={{.Version}}
-      - -X main.commit={{.Commit}}
+      # --- CORREÇÃO: Usando o nome completo do módulo: 'go-release-manager' ---
+      - -X go-release-manager.version={{.Version}}
+      - -X go-release-manager.commit={{.Commit}}
+      # --- FIM DA CORREÇÃO ---
 
 # -------------------------------
 # Arquivos (APENAS UM archive!)
@@ -35,7 +36,7 @@ archives:
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
-      {{- title .Os }}_
+      {{- title .OS }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
@@ -56,10 +57,10 @@ checksum:
   algorithm: sha256
 
 # -------------------------------
-# Snapshots
+# Snapshots (para --snapshot)
 # -------------------------------
 snapshot:
-  version_template: "{{ incpatch .Version }}-next"
+  name_template: "{{ incpatch .Version }}-next"
 
 # -------------------------------
 # Changelog
