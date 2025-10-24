@@ -1,6 +1,14 @@
+# .goreleaser.yml
 project_name: go-release-manager
+
+# -------------------------------
+# Compilação
+# -------------------------------
 builds:
-  - main: ./main.go
+  - env:
+      - CGO_ENABLED=0
+    main: ./main.go
+    binary: go-release-manager
     goos:
       - linux
       - windows
@@ -8,21 +16,61 @@ builds:
     goarch:
       - amd64
       - arm64
-    env:
-      - CGO_ENABLED=0
+    ignore:
+      # Windows não suporta ARM64 nativamente
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+
+# -------------------------------
+# Arquivos (APENAS UM archive!)
+# -------------------------------
 archives:
-  - format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-  - format: zip
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - id: release-archive
+    format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .OS }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE*
+      - README*
+      - config.example.*
+
+# -------------------------------
+# Checksums
+# -------------------------------
 checksum:
-  name_template: 'checksums.txt'
+  name_template: checksums.txt
+  algorithm: sha256
+
+# -------------------------------
+# Snapshots (para --snapshot)
+# -------------------------------
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+
+# -------------------------------
+# Changelog
+# -------------------------------
 changelog:
   sort: asc
+  use: git
   filters:
     exclude:
       - '^docs:'
       - '^test:'
       - '^chore:'
+      - '^ci:'
+      - 'Merge pull request'
+      - 'Merge branch'

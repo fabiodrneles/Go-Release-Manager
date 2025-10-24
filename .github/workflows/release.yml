@@ -1,12 +1,14 @@
+# .github/workflows/release.yml
 name: Release
 
 on:
   push:
     tags:
-      - 'v*' # Acionado por tags v*
+      - 'v*'
 
 permissions:
-  contents: write # Necessário para criar o release
+  contents: write
+  packages: write
 
 jobs:
   goreleaser:
@@ -15,22 +17,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # fetch-depth: 0 é crucial para o GoReleaser ler o histórico para o changelog
           fetch-depth: 0
-          # REMOVIDO: fetch-tags: true
-          # REMOVIDO: ref: ${{ github.ref }}
-          # Vamos confiar no comportamento padrão da action checkout@v4
-          # quando acionada por um evento de tag.
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24 # Confirma que é a versão do teu go.mod
+          go-version: '1.24'
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          # args: release --rm-dist (ou --clean, ambos funcionam)
-          args: release --rm-dist
+          args: release --clean  # <-- --rm-dist está DEPRECADO
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
