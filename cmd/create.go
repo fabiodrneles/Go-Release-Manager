@@ -1,162 +1,107 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 
-	// "os" // <-- REMOVIDO (movido para o pacote auth)
-
-	"go-release-manager/internal/auth"   // <-- NOVO PACOTE IMPORTADO
-	"go-release-manager/internal/config" // Importação existente
+	"go-release-manager/internal/auth"
 	"go-release-manager/internal/git"
-	"go-release-manager/internal/semver"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 var (
-	// token string // <-- Já removido
 	dryRun            bool
 	preReleaseChannel string
+	output            string
 )
 
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: color.CyanString("Cria e empurra uma nova tag semântica."),
-	Long: color.WhiteString(`Analisa os commits desde a última tag, determina a próxima versão semântica,
-cria e empurra a tag. O release do GitHub (com os binários) será criado automaticamente pela GitHub Action.`),
-
-	// --- EXEMPLO ATUALIZADO (com nova autenticação) ---
+	Long: color.WhiteString(`Analisa os commits desde a última tag estável, determina a próxima versão
+semântica, cria e empurra a tag. O release do GitHub (com os binários) é criado
+pelo GoReleaser na GitHub Action disparada pela tag.`),
 	Example: color.YellowString(`
-  # Executa o comando (lê GITHUB_TOKEN ou token do 'gh')
+  # Cria e empurra a próxima tag (lê GITHUB_TOKEN ou o token do 'gh')
   go-release-manager create
 
-  # Simula o processo (dry-run)
+  # Simula, sem credenciais e sem escrever nada
   go-release-manager create -d
 
   # Cria uma pré-release
   go-release-manager create -p beta
 
-  # Simula uma pré-release
-  # (Autenticação é automática via GITHUB_TOKEN ou 'gh auth login')
-  go-release-manager create -d -p rc
+  # Resultado em JSON para automação
+  go-release-manager create -d --output json
 `),
-	// --- FIM DA ATUALIZAÇÃO ---
-
-	Run: func(cmd *cobra.Command, args []string) {
-
-
-		// --- CARREGAR CONFIGURAÇÃO (Intacto) ---
-		cfg, err := config.LoadConfig()
+	Args: cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if output != "text" && output != "json" {
+			return fmt.Errorf("--output inválido: %q (use text ou json)", output)
+		}
+		p, err := plan(preReleaseChannel)
 		if err != nil {
-			log.Fatalf(color.RedString("Erro ao carregar configuração .go-releaserc.yml: %v"), err)
+			return err
 		}
-		// --- FIM DO CARREGAMENTO ---
+		out := cmd.OutOrStdout()
 
-		// 1. Base: última tag SemVer estável alcançável a partir de HEAD.
-		merged, err := git.MergedTags()
-		if err != nil {
-			log.Fatalf(color.RedString("Erro ao listar as tags: %v"), err)
-		}
-		allTags, err := git.AllTags()
-		if err != nil {
-			log.Fatalf(color.RedString("Erro ao listar as tags: %v"), err)
-		}
-		latestTag := semver.LatestStable(merged)
-		shownTag := latestTag
-		if shownTag == "" {
-			shownTag = "(nenhuma)"
-		}
-		log.Printf(color.GreenString("Última versão estável encontrada: %s"), shownTag)
-
-		// 2. Commits desde a base.
-		commits, err := git.GetCommitsSince(latestTag)
-		if err != nil {
-			log.Fatalf(color.RedString("Erro ao obter commits: %v"), err)
-		}
-		log.Printf("Analisando %d commits desde a tag %s...", len(commits), shownTag)
-
-		// 3. Próxima versão.
-		if preReleaseChannel != "" {
-			log.Printf(color.CyanString("Modo de pré-release ativado. Canal: %s"), preReleaseChannel)
-		}
-
-		nextVersion, increment, err := semver.DetermineNextVersion(cfg, latestTag, commits, preReleaseChannel, allTags)
-		if err != nil {
-			log.Fatalf(color.RedString("Erro ao determinar a próxima versão: %v"), err)
-		}
-
-		if increment == semver.IncrementNone {
+		if !p.Release() {
 			log.Println(color.YellowString("Nenhuma mudança relevante encontrada (feat, fix, BREAKING CHANGE, etc.). Nenhum release será criado."))
-			return
+			return report(out, p)
 		}
-		log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), increment, nextVersion)
+		log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), p.Increment, p.Next)
 
-		// 4. SE FOR --dry-run (INTACTO)
 		if dryRun {
-			fmt.Println(color.CyanString("\n--- MODO DRY RUN (SIMULAÇÃO) ---"))
-			fmt.Printf("Última tag encontrada: %s\n", shownTag)
-			if preReleaseChannel != "" {
-				fmt.Printf("Canal de pré-release: %s\n", preReleaseChannel)
-			}
-			fmt.Printf("Commits analisados: %d\n", len(commits))
-			fmt.Printf("Decisão de incremento: %s\n", color.MagentaString(increment.String()))
-			fmt.Printf("A nova tag a ser criada seria: %s\n", color.MagentaString(nextVersion))
-			fmt.Println(color.CyanString("--- FIM DO DRY RUN ---"))
-			return
+			return report(out, p)
 		}
 
-		// 5. Credenciais só são exigidas quando há push (spec 002 FR-2).
+		// Credenciais só são exigidas quando há push (spec 002 FR-2).
 		if _, err := auth.GetToken(); err != nil {
-			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o pela variável de ambiente GITHUB_TOKEN, ou faça login com o GitHub CLI (`gh auth login`).\nErro original: %v", err))
+			return fmt.Errorf("token de acesso não fornecido: defina GITHUB_TOKEN ou faça login com `gh auth login` (%w)", err)
 		}
-
-		// 6. Criar e empurrar a tag
-		log.Printf("Criando tag git '%s'...", nextVersion)
-		if err := git.CreateTag(nextVersion); err != nil {
-			log.Fatalf(color.RedString("Erro ao criar tag: %v"), err)
+		log.Printf("Criando tag git '%s'...", p.Next)
+		if err := git.CreateTag(p.Next); err != nil {
+			return fmt.Errorf("erro ao criar tag: %w", err)
 		}
-
-		log.Printf("Empurrando tag '%s' para o repositório remoto...", nextVersion)
-		if err := git.PushTag(nextVersion); err != nil {
-			log.Fatalf(color.RedString("Erro ao empurrar tag: %v"), err)
+		log.Printf("Empurrando tag '%s' para o repositório remoto...", p.Next)
+		if err := git.PushTag(p.Next); err != nil {
+			return fmt.Errorf("erro ao empurrar tag: %w", err)
 		}
-
-		// --- LÓGICA RESTANTE (INTACTA) ---
-
-		log.Printf(color.GreenString("✅ Tag %s criada e empurrada com sucesso!"), nextVersion)
+		p.Created = true
+		log.Printf(color.GreenString("✅ Tag %s criada e empurrada com sucesso!"), p.Next)
 		log.Println(color.CyanString("A GitHub Action 'Release' foi acionada. Verifique seu repositório em alguns minutos para os binários."))
+		return report(out, p)
 	},
+}
+
+// report writes the result: JSON alone on stdout, or the dry-run summary.
+func report(w io.Writer, p Plan) error {
+	if output == "json" {
+		enc := json.NewEncoder(w)
+		return enc.Encode(p)
+	}
+	if !dryRun || !p.Release() {
+		return nil
+	}
+	_, _ = fmt.Fprintln(w, color.CyanString("\n--- MODO DRY RUN (SIMULAÇÃO) ---"))
+	_, _ = fmt.Fprintf(w, "Última tag encontrada: %s\n", shown(p.Previous))
+	if p.Channel != "" {
+		_, _ = fmt.Fprintf(w, "Canal de pré-release: %s\n", p.Channel)
+	}
+	_, _ = fmt.Fprintf(w, "Commits analisados: %d\n", p.Commits)
+	_, _ = fmt.Fprintf(w, "Decisão de incremento: %s\n", color.MagentaString(p.Increment))
+	_, _ = fmt.Fprintf(w, "A nova tag a ser criada seria: %s\n", color.MagentaString(p.Next))
+	_, _ = fmt.Fprintln(w, color.CyanString("--- FIM DO DRY RUN ---"))
+	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(createCmd)
-
-	// --- ATUALIZADO (Exemplos com nova auth) ---
-	createCmd.Example = color.YellowString(
-		`
-  # Executa o comando (lê GITHUB_TOKEN ou token do 'gh')
-  go-release-manager create
-
-  # Simula o processo (dry-run)
-  go-release-manager create -d
-
-  # Cria uma pré-release
-  go-release-manager create -p beta
-
-  # Simula uma pré-release
-  # (Autenticação é automática via GITHUB_TOKEN ou 'gh auth login')
-  go-release-manager create -d -p rc
-`)
-	// --- FIM DA ATUALIZAÇÃO ---
-
-	// --- FLAGS (Intactas) ---
-	// Flag de Token (REMOVIDA)
-
-	// Flag de Dry-Run (Intacta)
 	createCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Simula o processo sem criar tags ou releases")
-
-	// Flag de Pré-Release (Intacta)
 	createCmd.Flags().StringVarP(&preReleaseChannel, "pre-release", "p", "", "Cria uma pré-release com o canal especificado (ex: beta, rc)")
+	createCmd.Flags().StringVarP(&output, "output", "o", "text", "Formato do resultado: text ou json")
 }

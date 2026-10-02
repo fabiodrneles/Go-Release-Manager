@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -188,5 +189,59 @@ func TestDryRunWithoutCredentials(t *testing.T) {
 	}
 	if !strings.Contains(string(out), "A nova tag a ser criada seria: v1.0.1") {
 		t.Errorf("versão proposta ausente:\n%s", out)
+	}
+}
+
+// runSplit returns stdout and stderr separately.
+func runSplit(t *testing.T, dir string, args ...string) (string, string) {
+	t.Helper()
+	cmd := exec.Command(binary, args...)
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GITHUB_TOKEN=test-token", "NO_COLOR=1")
+	var stdout, stderr strings.Builder
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("%v\n%s", err, stderr.String())
+	}
+	return stdout.String(), stderr.String()
+}
+
+// 002 AC-3
+func TestNextPrintsOnlyTheVersion(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
+	if out, _ := runSplit(t, dir, "next"); out != "v1.0.1\n" {
+		t.Errorf("next = %q, quero %q", out, "v1.0.1\n")
+	}
+	if out, _ := runSplit(t, dir, "next", "-p", "rc"); out != "v1.0.1-rc.1\n" {
+		t.Errorf("next -p rc = %q, quero %q", out, "v1.0.1-rc.1\n")
+	}
+	none := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:docs: b")
+	if out, _ := runSplit(t, none, "next"); out != "" {
+		t.Errorf("sem release, next = %q, quero vazio", out)
+	}
+}
+
+// 002 AC-4
+func TestCreateJSON(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
+	out, _ := runSplit(t, dir, "create", "-d", "--output", "json")
+	var got map[string]any
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("stdout não é JSON: %v\n%q", err, out)
+	}
+	want := map[string]any{"previous": "v1.0.0", "next": "v1.0.1", "increment": "Patch", "commits": 1.0, "created": false}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s = %v, quero %v", k, got[k], v)
+		}
+	}
+}
+
+// 002 FR-5
+func TestErrorEndsWithNewline(t *testing.T) {
+	dir := repo(t, "commit:feat: a")
+	out, code := run(t, dir, "create", "--output", "xml")
+	if code == 0 || !strings.HasSuffix(out, "\n") || !strings.Contains(out, "--output inválido") {
+		t.Errorf("código %d, saída %q", code, out)
 	}
 }

@@ -58,8 +58,11 @@ func Execute(version, commit string) {
 		rootCmd.Version = version + " (" + commit + ")"
 	}
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
+	// Errors go to stderr once, with a trailing newline (spec 002 FR-5).
+	rootCmd.SilenceUsage = true
+	rootCmd.SilenceErrors = true
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, color.RedString("Ocorreu um erro: '%s'"), err)
+		fmt.Fprintln(os.Stderr, color.RedString("Erro: %v", err))
 		os.Exit(1)
 	}
 }
