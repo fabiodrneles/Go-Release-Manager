@@ -294,3 +294,59 @@ func TestResolveVersion(t *testing.T) {
 		}
 	}
 }
+
+// 004 AC-1
+func TestReleaseAs(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:docs: b")
+	out, _ := runSplit(t, dir, "create", "-d", "--release-as", "v1.1.0", "--output", "json")
+	var got map[string]any
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("stdout não é JSON: %v\n%q", err, out)
+	}
+	if got["next"] != "v1.1.0" || got["forced"] != true {
+		t.Errorf("next=%v forced=%v, quero v1.1.0 e true", got["next"], got["forced"])
+	}
+}
+
+// 004 AC-2
+func TestReleaseAsRejectsLowerOrExisting(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
+	for _, v := range []string{"v0.9.0", "v1.0.0", "1.2.0", "latest"} {
+		if out, code := run(t, dir, "create", "-d", "--release-as", v); code == 0 {
+			t.Errorf("--release-as %s aceito:\n%s", v, out)
+		}
+	}
+}
+
+// 004 AC-3: tag criada num commit anterior ao HEAD e empurrada para o remoto.
+func TestCreateAtRef(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
+	sha := gitOut(t, dir, "rev-parse", "HEAD")
+	gitOut(t, dir, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "feat: c")
+	remote := t.TempDir()
+	gitOut(t, remote, "init", "-q", "--bare")
+	gitOut(t, dir, "remote", "add", "origin", remote)
+
+	out, _ := runSplit(t, dir, "create", "--ref", sha, "--output", "json")
+	var got map[string]any
+	if err := json.Unmarshal([]byte(out), &got); err != nil {
+		t.Fatalf("stdout não é JSON: %v\n%q", err, out)
+	}
+	if got["next"] != "v1.0.1" || got["commits"] != 1.0 || got["created"] != true {
+		t.Errorf("next=%v commits=%v created=%v, quero v1.0.1, 1 e true", got["next"], got["commits"], got["created"])
+	}
+	if tagged := gitOut(t, remote, "rev-parse", "v1.0.1^{commit}"); tagged != sha {
+		t.Errorf("v1.0.1 no remoto aponta para %s, quero %s", tagged, sha)
+	}
+}
+
+func gitOut(t *testing.T, dir string, args ...string) string {
+	t.Helper()
+	cmd := exec.Command("git", args...)
+	cmd.Dir = dir
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, out)
+	}
+	return strings.TrimSpace(string(out))
+}

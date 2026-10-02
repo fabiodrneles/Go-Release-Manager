@@ -185,3 +185,24 @@ func DetermineNextVersion(cfg *config.Config, base string, commits []string, cha
 	}
 	return fmt.Sprintf("v%s-%s.%d", next.String(), channel, n+1), inc, nil
 }
+
+// ValidateForced checks a version given with --release-as: it must be SemVer,
+// greater than the base (latest stable tag) and not an existing tag
+// (spec 004 FR-1).
+func ValidateForced(version, base string, allTags []string) error {
+	v := parseTag(version)
+	if v == nil || !strings.HasPrefix(version, "v") {
+		return fmt.Errorf("--release-as %q não é uma versão SemVer no formato vX.Y.Z", version)
+	}
+	for _, t := range allTags {
+		if t == version {
+			return fmt.Errorf("--release-as %s: a tag já existe", version)
+		}
+	}
+	if base != "" {
+		if b := parseTag(base); b != nil && !v.GreaterThan(b) {
+			return fmt.Errorf("--release-as %s precisa ser maior que a última versão estável (%s)", version, base)
+		}
+	}
+	return nil
+}

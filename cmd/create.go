@@ -17,6 +17,8 @@ var (
 	dryRun            bool
 	preReleaseChannel string
 	output            string
+	createRef         string
+	releaseAs         string
 )
 
 var createCmd = &cobra.Command{
@@ -43,7 +45,7 @@ pelo GoReleaser na GitHub Action disparada pela tag.`),
 		if output != "text" && output != "json" {
 			return fmt.Errorf("--output inválido: %q (use text ou json)", output)
 		}
-		p, err := plan(preReleaseChannel)
+		p, err := plan(planOptions{channel: preReleaseChannel, ref: createRef, releaseAs: releaseAs})
 		if err != nil {
 			return err
 		}
@@ -53,7 +55,11 @@ pelo GoReleaser na GitHub Action disparada pela tag.`),
 			log.Println(color.YellowString("Nenhuma mudança relevante encontrada (feat, fix, BREAKING CHANGE, etc.). Nenhum release será criado."))
 			return report(out, p)
 		}
-		log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), p.Increment, p.Next)
+		if p.Forced {
+			log.Printf(color.GreenString("Versão informada com --release-as: %s"), p.Next)
+		} else {
+			log.Printf(color.GreenString("Tipo de incremento: %s. Nova versão calculada: %s"), p.Increment, p.Next)
+		}
 
 		if dryRun {
 			return report(out, p)
@@ -64,7 +70,7 @@ pelo GoReleaser na GitHub Action disparada pela tag.`),
 			return fmt.Errorf("token de acesso não fornecido: defina GITHUB_TOKEN ou faça login com `gh auth login` (%w)", err)
 		}
 		log.Printf("Criando tag git '%s'...", p.Next)
-		if err := git.CreateTag(p.Next); err != nil {
+		if err := git.CreateTag(p.Next, p.Ref); err != nil {
 			return fmt.Errorf("erro ao criar tag: %w", err)
 		}
 		log.Printf("Empurrando tag '%s' para o repositório remoto...", p.Next)
@@ -104,4 +110,6 @@ func init() {
 	createCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Simula o processo sem criar tags ou releases")
 	createCmd.Flags().StringVarP(&preReleaseChannel, "pre-release", "p", "", "Cria uma pré-release com o canal especificado (ex: beta, rc)")
 	createCmd.Flags().StringVarP(&output, "output", "o", "text", "Formato do resultado: text ou json")
+	createCmd.Flags().StringVar(&createRef, "ref", "", "Commit ou branch onde analisar e criar a tag (padrão: HEAD)")
+	createCmd.Flags().StringVar(&releaseAs, "release-as", "", "Usa esta versão (vX.Y.Z) no lugar da calculada")
 }

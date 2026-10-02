@@ -44,6 +44,13 @@ go-release-manager create --dry-run --output json
 go-release-manager --version
 ```
 
+Para seguir uma versão definida no planejamento ou criar a tag num commit que não é o `HEAD`:
+
+```text
+go-release-manager create --release-as v2.0.0      # força a versão (maior que a última e ainda inexistente)
+go-release-manager create --ref 1a2b3c4            # analisa e cria a tag nesse commit
+```
+
 Para criar e empurrar a tag, rode `go-release-manager create` com `GITHUB_TOKEN` definido ou depois de `gh auth login`. O push da tag dispara o workflow de release do seu repositório.
 
 ## Como a versão é calculada
