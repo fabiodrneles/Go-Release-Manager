@@ -152,3 +152,21 @@ func TestCommitCount(t *testing.T) {
 		t.Errorf("esperava 'Commits analisados: 1':\n%s", out)
 	}
 }
+
+// 002 AC-1
+func TestVersionFlag(t *testing.T) {
+	bin := filepath.Join(t.TempDir(), "grm")
+	if out, err := exec.Command("go", "build", "-ldflags", "-X main.version=1.2.3", "-o", bin, ".").CombinedOutput(); err != nil {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	out, err := exec.Command(bin, "--version").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(out) != "1.2.3\n" {
+		t.Errorf("--version = %q, quero %q", out, "1.2.3\n")
+	}
+	if out, _ := run(t, t.TempDir(), "--version"); out != "dev\n" {
+		t.Errorf("build local: --version = %q, quero %q", out, "dev\n")
+	}
+}
