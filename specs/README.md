@@ -29,7 +29,7 @@ Convenções: `MUST`/`SHOULD`/`MAY` seguem a RFC 2119. Prioridades: **P0** (bloq
 | ID | Spec | Prioridade | Status |
 |---|---|---|---|
 | 001 | [Cálculo da próxima versão](001-versioning/spec.md) | P0 | Done |
-| 002 | [Interface de linha de comando](002-cli/spec.md) | P1 | Approved |
+| 002 | [Interface de linha de comando](002-cli/spec.md) | P1 | Done |
 | 003 | [CI e pipeline de release](003-release-pipeline/spec.md) | P0 | Approved |
 
 Status possíveis: `Draft` → `Approved` → `In Progress` → `Done`.

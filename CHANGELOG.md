@@ -4,6 +4,29 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-10-02
+
+### Adicionado
+
+- `--version`, com a versão embutida pelo GoReleaser.
+- `next`: imprime só a próxima versão, para scripts e GitHub Actions.
+- `create --output json`: resultado completo (`previous`, `next`, `increment`, `commits`, `created`).
+- `go install github.com/fabiodrneles/go-release-manager@latest`.
+- O release roda `make ci` antes de publicar, e os PRs rodam `goreleaser check`.
+
+### Alterado
+
+- `--dry-run` não exige mais credenciais: o token só é pedido antes do push da tag.
+- Tags com sufixo (`-beta.N`, `-rc.N`) são publicadas como pré-release no GitHub.
+- Erros saem numa linha só em stderr, sem o texto de uso do comando.
+- Cores só num terminal; `NO_COLOR` é respeitado.
+- README reescrito; os comandos dele rodam no CI.
+- O caminho do módulo passa a ser `github.com/fabiodrneles/go-release-manager`.
+
+### Removido
+
+- O pacote `internal/provider`, que não era usado, e as dependências da API do GitHub.
+
 ## [0.11.0] - 2026-10-02
 
 Primeira versão desenvolvida com o processo SDD do [sdd-kit](https://github.com/fabiodrneles/sdd-kit). Specs em [`specs/`](specs/README.md).
