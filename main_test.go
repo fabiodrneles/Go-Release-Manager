@@ -168,8 +168,12 @@ func TestVersionFlag(t *testing.T) {
 	if string(out) != "1.2.3\n" {
 		t.Errorf("--version = %q, quero %q", out, "1.2.3\n")
 	}
-	if out, _ := run(t, t.TempDir(), "--version"); out != "dev\n" {
-		t.Errorf("build local: --version = %q, quero %q", out, "dev\n")
+	// The test binary itself is built from this checkout: Go stamps the tag
+	// version when the checkout is exactly a clean tag (as in the release
+	// workflow) and leaves "dev" otherwise, so both are valid here.
+	local, _ := run(t, t.TempDir(), "--version")
+	if local != "dev\n" && !releaseVersion.MatchString(strings.TrimSpace(local)) {
+		t.Errorf("build local: --version = %q, quero \"dev\" ou uma tag", local)
 	}
 }
 

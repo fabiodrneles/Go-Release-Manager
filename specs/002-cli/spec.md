@@ -11,7 +11,7 @@ A versão não é embutida no binário (A3), o README documenta uma flag que nã
 
 ## Requisitos funcionais
 
-- **FR-1** `--version` MUST imprimir a versão embutida pelo GoReleaser (`-X main.version`), ou `dev` num build local.
+- **FR-1** `--version` MUST imprimir a versão embutida pelo GoReleaser (`-X main.version`); sem ela, a versão do módulo registrada pelo Go quando é uma tag (`go install ...@vX.Y.Z` ou build sobre uma tag limpa); senão, `dev`.
 - **FR-2 (D5)** O token MUST ser exigido só quando o comando vai fazer push; `--dry-run` MUST funcionar sem credenciais.
 - **FR-3 (D4)** `next` MUST imprimir só a próxima versão (ou nada, sem incremento) e sair com 0.
 - **FR-4 (D4)** `create --output json` MUST imprimir um objeto com `previous`, `next`, `increment`, `commits` e `created`.
@@ -25,6 +25,10 @@ A versão não é embutida no binário (A3), o README documenta uma flag que nã
 - **AC-3** Dado `v1.0.0` e um commit `fix:`, quando `next` roda, então stdout é exatamente `v1.0.1\n`.
 - **AC-4** Dado o mesmo histórico, quando `create -d --output json` roda, então stdout é um JSON válido com `"next":"v1.0.1"` e `"created":false`.
 - **AC-5** Dado o README, quando o CI roda, então cada comando dos blocos `bash` funciona.
+
+## Mudanças
+
+- MODIFIED FR-1: um build feito exatamente sobre uma tag limpa mostra a versão da tag, e não `dev`. A suposição anterior quebrou o `make ci` do workflow de release da `v1.0.0` (#38).
 
 ## Fora de escopo
 
