@@ -1,7 +1,7 @@
 # 001 — Cálculo da próxima versão
 
 - **Prioridade:** P0
-- **Status:** Draft — aguarda as decisões D1, D2 e D3 do dono
+- **Status:** Approved — decisões respondidas pelo dono em 2026-10-02
 - **Código afetado:** `internal/semver`, `internal/config`, `internal/git`
 - **Resolve:** C1, C2, M2, M3, B1
 
@@ -35,4 +35,4 @@ O cálculo erra depois de uma pré-release (C1), uma configuração parcial desa
 
 ## Decisões
 
-- Pendentes: D1, D2 e D3 ([ANALYSIS.md §7](../ANALYSIS.md#7-decisões-em-aberto)).
+- D1, D2 e D3 respondidas pelo dono em 2026-10-02 conforme as recomendações de [ANALYSIS.md §7](../ANALYSIS.md#7-decisões-respondidas-pelo-dono-em-2026-10-02).

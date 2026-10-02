@@ -1,7 +1,7 @@
 # 003 — CI e pipeline de release
 
 - **Prioridade:** P0
-- **Status:** Draft — aguarda a decisão D6 do dono
+- **Status:** Approved — decisões respondidas pelo dono em 2026-10-02
 - **Código afetado:** `.github/workflows/`, `.goreleaser.yml`, `Makefile`, `action.yml`
 - **Resolve:** A1, A2, A4, M5
 
@@ -26,4 +26,4 @@ Não há CI de PR (A1); pré-releases saem como releases normais (A2); a `main` 
 
 ## Decisões
 
-- Pendente: D6 ([ANALYSIS.md §7](../ANALYSIS.md#7-decisões-em-aberto)).
+- D6 respondidas pelo dono em 2026-10-02 conforme as recomendações de [ANALYSIS.md §7](../ANALYSIS.md#7-decisões-respondidas-pelo-dono-em-2026-10-02).

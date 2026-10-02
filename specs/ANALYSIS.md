@@ -76,14 +76,14 @@ Bem escrito e com boa proposta de valor ("por que o go-release-manager"), mas de
 2. **Fase 2 (P1):** `--version`, token só quando faz push, saída para automação (`--output json`), README correto, `prerelease: auto` no GoReleaser.
 3. **Fase 3 (P2):** GitHub Action reutilizável e integração com o plugin `sdd-release` do sdd-kit.
 
-## 7. Decisões em aberto
+## 7. Decisões (respondidas pelo dono em 2026-10-02)
 
 | ID | Pergunta | Opções | Recomendação |
 |---|---|---|---|
-| D1 | Como calcular a versão depois de uma pré-release? | (a) a base é a última tag **estável**; pré-releases do mesmo canal e da mesma base só incrementam o contador (`v2.0.0-beta.1` → `v2.0.0-beta.2`; estável → `v2.0.0`), como no semantic-release; (b) manter o comportamento atual e documentar | **(a)**: é o comportamento esperado do SemVer e corrige C1 |
-| D2 | Commit incompatível enquanto a versão é `0.x`? | (a) manter: vai para `1.0.0`; (b) incrementar o minor enquanto for `0.x` (SemVer §4), com uma opção para sair do `0.x` | **(b)**: evita uma `1.0.0` acidental; a `1.0.0` vira uma decisão explícita |
-| D3 | Como combinar o `.go-releaserc.yml` com as regras padrão? | (a) mesclar por tipo: o arquivo só sobrescreve os tipos que lista; (b) substituir tudo, mas avisar quando `feat` ou `fix` ficarem sem regra | **(a)**: é o que o comentário do código promete e corrige C2 |
-| D4 | Saída para automação? | (a) `--output json` no `create` (versão, incremento, commits, tag criada ou não); (b) um subcomando `next` que imprime só a versão; (c) as duas | **(c)**: `next` para shell e Actions, JSON para o plugin |
-| D5 | Token e o pacote `internal/provider`? | (a) exigir token só quando há push e remover o `provider`; (b) usar o `provider` para criar a release no GitHub | **(a)**: o GoReleaser já cria a release; menos código e dry-run sem credenciais |
-| D6 | O que fazer com as tags fora da `main` (`v0.9.0-beta.1`..`v0.10.0-beta.5`)? | (a) manter as tags e seguir da `main`, com a primeira versão estável da Fase 1 em `v0.11.0`, acima de todas; (b) apagar essas tags (ação do dono) | **(a)**: não reescreve nada publicado e evita conflito de versão |
-| D7 | Idioma das mensagens da CLI? | (a) manter em português; (b) inglês, com o README em português e inglês | **(a)** agora; inglês pode virar ticket na Fase 3 |
+| D1 | Como calcular a versão depois de uma pré-release? | (a) a base é a última tag **estável**; pré-releases do mesmo canal e da mesma base só incrementam o contador (`v2.0.0-beta.1` → `v2.0.0-beta.2`; estável → `v2.0.0`), como no semantic-release; (b) manter o comportamento atual e documentar | **(a)**: é o comportamento esperado do SemVer e corrige C1 — **respondida: (a)** |
+| D2 | Commit incompatível enquanto a versão é `0.x`? | (a) manter: vai para `1.0.0`; (b) incrementar o minor enquanto for `0.x` (SemVer §4), com uma opção para sair do `0.x` | **(b)**: evita uma `1.0.0` acidental; a `1.0.0` vira uma decisão explícita — **respondida: (b)** |
+| D3 | Como combinar o `.go-releaserc.yml` com as regras padrão? | (a) mesclar por tipo: o arquivo só sobrescreve os tipos que lista; (b) substituir tudo, mas avisar quando `feat` ou `fix` ficarem sem regra | **(a)**: é o que o comentário do código promete e corrige C2 — **respondida: (a)** |
+| D4 | Saída para automação? | (a) `--output json` no `create` (versão, incremento, commits, tag criada ou não); (b) um subcomando `next` que imprime só a versão; (c) as duas | **(c)**: `next` para shell e Actions, JSON para o plugin — **respondida: (c)** |
+| D5 | Token e o pacote `internal/provider`? | (a) exigir token só quando há push e remover o `provider`; (b) usar o `provider` para criar a release no GitHub | **(a)**: o GoReleaser já cria a release; menos código e dry-run sem credenciais — **respondida: (a)** |
+| D6 | O que fazer com as tags fora da `main` (`v0.9.0-beta.1`..`v0.10.0-beta.5`)? | (a) manter as tags e seguir da `main`, com a primeira versão estável da Fase 1 em `v0.11.0`, acima de todas; (b) apagar essas tags (ação do dono) | **(a)**: não reescreve nada publicado e evita conflito de versão — **respondida: (a)** |
+| D7 | Idioma das mensagens da CLI? | (a) manter em português; (b) inglês, com o README em português e inglês | **(a)** agora; inglês pode virar ticket na Fase 3 — **respondida: (a)** |

@@ -1,7 +1,7 @@
 # 002 — Interface de linha de comando
 
 - **Prioridade:** P1
-- **Status:** Draft — aguarda as decisões D4, D5 e D7 do dono
+- **Status:** Approved — decisões respondidas pelo dono em 2026-10-02
 - **Código afetado:** `cmd/`, `main.go`, `internal/auth`, `internal/provider`, `README.md`
 - **Resolve:** A3, A5, M1, M4, B3
 
@@ -32,4 +32,4 @@ A versão não é embutida no binário (A3), o README documenta uma flag que nã
 
 ## Decisões
 
-- Pendentes: D4, D5 e D7 ([ANALYSIS.md §7](../ANALYSIS.md#7-decisões-em-aberto)).
+- D4, D5 e D7 respondidas pelo dono em 2026-10-02 conforme as recomendações de [ANALYSIS.md §7](../ANALYSIS.md#7-decisões-respondidas-pelo-dono-em-2026-10-02).
