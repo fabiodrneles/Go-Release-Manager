@@ -92,5 +92,6 @@ runs:
         json=$(go-release-manager "${args[@]}")
         echo "$json"
         for k in next previous increment created; do
-          echo "$k=$(jq -r ".$k // \"\"" <<<"$json")" >> "$GITHUB_OUTPUT"
+          # "// empty" would also drop false, so convert explicitly.
+          echo "$k=$(jq -r ".$k | if . == null then \"\" else tostring end" <<<"$json")" >> "$GITHUB_OUTPUT"
         done
