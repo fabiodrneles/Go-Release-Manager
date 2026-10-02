@@ -1,4 +1,4 @@
-module go-release-manager
+module github.com/fabiodrneles/go-release-manager
 
 go 1.26.0
 

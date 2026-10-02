@@ -6,8 +6,8 @@ import (
 	"io"
 	"log"
 
-	"go-release-manager/internal/auth"
-	"go-release-manager/internal/git"
+	"github.com/fabiodrneles/go-release-manager/internal/auth"
+	"github.com/fabiodrneles/go-release-manager/internal/git"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"

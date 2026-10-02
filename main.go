@@ -1,6 +1,6 @@
 package main
 
-import "go-release-manager/cmd"
+import "github.com/fabiodrneles/go-release-manager/cmd"
 
 // Set by GoReleaser through -ldflags "-X main.version=... -X main.commit=...".
 var (
