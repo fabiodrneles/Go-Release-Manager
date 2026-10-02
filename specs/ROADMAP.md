@@ -25,5 +25,6 @@ Cada tarefa referencia a spec e os critérios de aceite que ela fecha. Ordem sug
 
 ## Fase 3 — Profissional (P2) → `v1.0.0`
 
-- [ ] **T11** GitHub Action reutilizável — 003 FR-5, AC-4
-- [ ] **T12** Integração com o plugin `sdd-release` do sdd-kit (documentação e exemplo)
+- [x] **T11** GitHub Action reutilizável — 003 FR-5, AC-4
+- [x] **T12** Integração com o plugin `sdd-release` do sdd-kit (documentação e exemplo)
+- [x] **T13** `--version` com a versão do módulo no `go install` (#32)

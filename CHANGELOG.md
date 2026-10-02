@@ -4,6 +4,19 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-02
+
+Primeira versão estável. Cálculo de versão, CLI e pipeline cobertos por specs e testes ([`specs/`](specs/README.md)).
+
+### Adicionado
+
+- GitHub Action reutilizável (`uses: fabiodrneles/go-release-manager@v1.0.0`) com outputs `next`, `previous`, `increment` e `created`, testada em Linux, macOS e Windows.
+- Integração documentada com o plugin `sdd-release` do sdd-kit.
+
+### Corrigido
+
+- `--version` mostra a versão do módulo quando o binário vem do `go install`.
+
 ## [0.12.0] - 2026-10-02
 
 ### Adicionado
