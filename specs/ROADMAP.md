@@ -31,6 +31,6 @@ Cada tarefa referencia a spec e os critérios de aceite que ela fecha. Ordem sug
 
 ## Fase 4 — Controle da release (P1) → `v1.1.0`
 
-- [ ] **T14** `create --release-as` — 004 FR-1, FR-3, AC-1, AC-2
-- [ ] **T15** `--ref`: analisar e criar a tag num commit — 004 FR-2, AC-3
-- [ ] **T16** Action com `release-as` e `ref`, e workflow `release-tag.yml` — 004 FR-4, FR-5, AC-4
+- [x] **T14** `create --release-as` — 004 FR-1, FR-3, AC-1, AC-2
+- [x] **T15** `--ref`: analisar e criar a tag num commit — 004 FR-2, AC-3
+- [x] **T16** Action com `release-as` e `ref`, e workflow `release-tag.yml` — 004 FR-4, FR-5, AC-4

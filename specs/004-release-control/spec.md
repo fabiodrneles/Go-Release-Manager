@@ -1,7 +1,7 @@
 # 004 — Controle da versão e do commit da tag
 
 - **Prioridade:** P1
-- **Status:** Approved — pedido do dono em 2026-10-02
+- **Status:** Done — entregue na `v1.1.0`
 - **Código afetado:** `cmd/`, `internal/git`, `action.yml`
 
 ## Contexto
