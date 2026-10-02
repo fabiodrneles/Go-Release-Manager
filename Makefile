@@ -4,7 +4,7 @@ GOLANGCI_LINT_VERSION := v2.14.0
 .DEFAULT_GOAL := ci
 
 .PHONY: ci
-ci: lint test build ## Tudo o que o CI verifica
+ci: lint test build no-binaries ## Tudo o que o CI verifica
 
 .PHONY: lint
 lint: ## golangci-lint
@@ -25,3 +25,7 @@ docs: ## markdownlint (o CI também verifica links)
 .PHONY: sdd-check
 sdd-check: ## Rastreabilidade specs × testes × ROADMAP (falha se houver aviso)
 	sh scripts/sdd-check.sh --strict
+
+.PHONY: no-binaries
+no-binaries: ## Nenhum binário versionado (spec 003 AC-3)
+	sh scripts/check-binaries.sh
