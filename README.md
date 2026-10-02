@@ -71,10 +71,12 @@ releaseRules:
     release: patch
 ```
 
-## Num pipeline
+## GitHub Action
+
+A Action instala o binário da release (conferindo o checksum) e expõe o resultado como outputs: `next`, `previous`, `increment` e `created`.
 
 ```yaml
-name: Tag
+name: Release
 on:
   workflow_dispatch:
 permissions:
@@ -86,16 +88,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Instala o go-release-manager
-        run: |
-          gh release download -R fabiodrneles/go-release-manager -p '*_Linux_x86_64.tar.gz'
-          tar xzf go-release-manager_*_Linux_x86_64.tar.gz go-release-manager
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - run: ./go-release-manager create
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - id: version
+        uses: fabiodrneles/go-release-manager@v1.0.0
+        with:
+          create: true # sem isto, só calcula
+      - run: echo "Tag criada: ${{ steps.version.outputs.next }}"
 ```
+
+| Input | Padrão | O que faz |
+|---|---|---|
+| `version` | `latest` | Versão do go-release-manager a instalar |
+| `create` | `false` | `true` cria e empurra a tag |
+| `pre-release` | | Canal de pré-release (`beta`, `rc`) |
+| `working-directory` | `.` | Repositório a analisar |
+| `token` | `github.token` | Token para baixar a release e empurrar a tag |
+
+O `checkout` precisa de `fetch-depth: 0` para enxergar as tags. A tag criada com o `GITHUB_TOKEN` padrão **não dispara** outros workflows (regra do GitHub); para disparar o seu workflow de release, use um token de app ou PAT em `token`, ou chame o build no mesmo workflow.
+
+### Com o sdd-kit
+
+No processo do [sdd-kit](https://github.com/fabiodrneles/sdd-kit), o plugin `sdd-release` usa esta ferramenta para propor a versão da próxima release a partir dos commits da fase e preparar o PR de fechamento.
 
 ## Desenvolvimento
 
