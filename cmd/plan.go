@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"go-release-manager/internal/config"
-	"go-release-manager/internal/git"
-	"go-release-manager/internal/semver"
+	"github.com/fabiodrneles/go-release-manager/internal/config"
+	"github.com/fabiodrneles/go-release-manager/internal/git"
+	"github.com/fabiodrneles/go-release-manager/internal/semver"
 
 	"github.com/fatih/color"
 )

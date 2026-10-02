@@ -17,7 +17,11 @@ O `go-release-manager` é uma CLI leve, escrita em Go, que lê os commits desde 
 
 ## Instalação
 
-Baixe o binário do seu sistema (Linux, macOS ou Windows) na [página de Releases](https://github.com/fabiodrneles/go-release-manager/releases), confira o `checksums.txt` e coloque o binário no `PATH`.
+Baixe o binário do seu sistema (Linux, macOS ou Windows) na [página de Releases](https://github.com/fabiodrneles/go-release-manager/releases), confira o `checksums.txt` e coloque o binário no `PATH`. Com Go instalado:
+
+```text
+go install github.com/fabiodrneles/go-release-manager@latest
+```
 
 ## Uso
 

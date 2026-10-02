@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-release-manager/internal/config"
+	"github.com/fabiodrneles/go-release-manager/internal/config"
 
 	"github.com/Masterminds/semver/v3"
 )
