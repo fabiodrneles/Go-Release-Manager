@@ -75,3 +75,9 @@ changelog:
       - '^ci:'
       - 'Merge pull request'
       - 'Merge branch'
+
+# -------------------------------
+# Release (spec 003 FR-3)
+# -------------------------------
+release:
+  prerelease: auto

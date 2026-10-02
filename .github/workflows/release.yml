@@ -24,6 +24,18 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Versão do golangci-lint (Makefile)
+        id: lint
+        run: echo "version=$(sed -n 's/^GOLANGCI_LINT_VERSION *:= *//p' Makefile)" >> "$GITHUB_OUTPUT"
+
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: ${{ steps.lint.outputs.version }}
+          install-only: true
+
+      - name: make ci antes de publicar (spec 003 FR-2)
+        run: make ci
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
