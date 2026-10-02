@@ -26,9 +26,9 @@ func lines(out string) []string {
 	return strings.Split(out, "\n")
 }
 
-// MergedTags returns the tags reachable from HEAD.
-func MergedTags() ([]string, error) {
-	out, err := runCommand("git", "tag", "--merged", "HEAD")
+// MergedTags returns the tags reachable from ref.
+func MergedTags(ref string) ([]string, error) {
+	out, err := runCommand("git", "tag", "--merged", ref)
 	if err != nil {
 		return nil, err
 	}
@@ -44,12 +44,12 @@ func AllTags() ([]string, error) {
 	return lines(out), nil
 }
 
-// GetCommitsSince returns the full message of each commit after tag, or of
-// every commit when tag is empty.
-func GetCommitsSince(tag string) ([]string, error) {
-	commitRange := "HEAD"
+// GetCommitsSince returns the full message of each commit after tag up to
+// ref, or of every commit up to ref when tag is empty.
+func GetCommitsSince(tag, ref string) ([]string, error) {
+	commitRange := ref
 	if tag != "" {
-		commitRange = tag + "..HEAD"
+		commitRange = tag + ".." + ref
 	}
 	// %B is the raw message; NUL separates the commits.
 	out, err := runCommand("git", "log", commitRange, "--pretty=format:%B%x00")
@@ -65,10 +65,15 @@ func GetCommitsSince(tag string) ([]string, error) {
 	return commits, nil
 }
 
-// CreateTag creates a lightweight tag at HEAD.
-func CreateTag(tag string) error {
-	_, err := runCommand("git", "tag", tag)
+// CreateTag creates a lightweight tag at ref.
+func CreateTag(tag, ref string) error {
+	_, err := runCommand("git", "tag", tag, ref)
 	return err
+}
+
+// ShortSHA resolves ref to an abbreviated commit hash.
+func ShortSHA(ref string) (string, error) {
+	return runCommand("git", "rev-parse", "--short", ref+"^{commit}")
 }
 
 // PushTag pushes a tag to origin.

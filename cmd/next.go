@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var nextChannel string
+var nextChannel, nextRef string
 
 var nextCmd = &cobra.Command{
 	Use:   "next",
@@ -18,7 +18,7 @@ nada e sai com 0. As mensagens de diagnóstico vão para stderr.`,
   go-release-manager next -p rc`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		p, err := plan(nextChannel)
+		p, err := plan(planOptions{channel: nextChannel, ref: nextRef})
 		if err != nil {
 			return err
 		}
@@ -33,4 +33,5 @@ nada e sai com 0. As mensagens de diagnóstico vão para stderr.`,
 func init() {
 	rootCmd.AddCommand(nextCmd)
 	nextCmd.Flags().StringVarP(&nextChannel, "pre-release", "p", "", "Canal de pré-release (ex: beta, rc)")
+	nextCmd.Flags().StringVar(&nextRef, "ref", "", "Commit ou branch a analisar (padrão: HEAD)")
 }
