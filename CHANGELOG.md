@@ -4,6 +4,16 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-02
+
+### Adicionado
+
+- `create --release-as vX.Y.Z`: força a versão (SemVer, maior que a última estável e ainda inexistente).
+- `create --ref` e `next --ref`: analisam e criam a tag num commit específico.
+- Saída JSON com `ref` e `forced`.
+- Action com os inputs `release-as` e `ref`, e `version: source`.
+- Workflow "Release tag": cria a tag pelo GitHub e publica a release no mesmo fluxo.
+
 ## [1.0.0] - 2026-10-02
 
 Primeira versão estável. Cálculo de versão, CLI e pipeline cobertos por specs e testes ([`specs/`](specs/README.md)).
