@@ -63,26 +63,35 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		}
 		// --- FIM DO CARREGAMENTO ---
 
-		// 1. Obter a última tag (Intacto)
-		latestTag, err := git.GetLatestTag()
+		// 1. Base: última tag SemVer estável alcançável a partir de HEAD.
+		merged, err := git.MergedTags()
 		if err != nil {
-			log.Fatalf(color.RedString("Erro ao obter a última tag: %v"), err)
+			log.Fatalf(color.RedString("Erro ao listar as tags: %v"), err)
 		}
-		log.Printf(color.GreenString("Última versão encontrada: %s"), latestTag)
+		allTags, err := git.AllTags()
+		if err != nil {
+			log.Fatalf(color.RedString("Erro ao listar as tags: %v"), err)
+		}
+		latestTag := semver.LatestStable(merged)
+		shownTag := latestTag
+		if shownTag == "" {
+			shownTag = "(nenhuma)"
+		}
+		log.Printf(color.GreenString("Última versão estável encontrada: %s"), shownTag)
 
-		// 2. Obter commits (Intacto)
+		// 2. Commits desde a base.
 		commits, err := git.GetCommitsSince(latestTag)
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao obter commits: %v"), err)
 		}
-		log.Printf("Analisando %d commits desde a tag %s...", len(commits), latestTag)
+		log.Printf("Analisando %d commits desde a tag %s...", len(commits), shownTag)
 
-		// 3. DETERMINAR A PRÓXIMA VERSÃO (Intacto)
+		// 3. Próxima versão.
 		if preReleaseChannel != "" {
 			log.Printf(color.CyanString("Modo de pré-release ativado. Canal: %s"), preReleaseChannel)
 		}
 
-		nextVersion, increment, err := semver.DetermineNextVersion(cfg, latestTag, commits, preReleaseChannel)
+		nextVersion, increment, err := semver.DetermineNextVersion(cfg, latestTag, commits, preReleaseChannel, allTags)
 		if err != nil {
 			log.Fatalf(color.RedString("Erro ao determinar a próxima versão: %v"), err)
 		}
@@ -96,7 +105,7 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 		// 4. SE FOR --dry-run (INTACTO)
 		if dryRun {
 			fmt.Println(color.CyanString("\n--- MODO DRY RUN (SIMULAÇÃO) ---"))
-			fmt.Printf("Última tag encontrada: %s\n", latestTag)
+			fmt.Printf("Última tag encontrada: %s\n", shownTag)
 			if preReleaseChannel != "" {
 				fmt.Printf("Canal de pré-release: %s\n", preReleaseChannel)
 			}

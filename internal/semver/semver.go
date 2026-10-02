@@ -1,3 +1,4 @@
+// Package semver computes the next semantic version from Conventional Commits.
 package semver
 
 import (
@@ -7,8 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go-release-manager/internal/config" // <-- NOVO PACOTE IMPORTADO
-	"go-release-manager/internal/git"
+	"go-release-manager/internal/config"
 
 	"github.com/Masterminds/semver/v3"
 )
@@ -30,36 +30,28 @@ var commitRegex = regexp.MustCompile(`^(\w+)(?:\(([^)]+)\))?(!?): (.*)$`)
 
 var footerRegex = regexp.MustCompile(`^([\w-]+): |^(BREAKING CHANGE): |^(BREAKING-CHANGE): `)
 
+var paragraphSep = regexp.MustCompile("\n\n")
+
 func parseCommit(rawCommit string) (header string, body string, footers string) {
-	// (Esta função permanece 100% intacta)
 	commit := strings.TrimSpace(rawCommit)
 	parts := strings.SplitN(commit, "\n\n", 2)
-	if len(parts) == 0 {
-		return "", "", ""
-	}
 	header = strings.Split(parts[0], "\n")[0]
 	if len(parts) == 1 {
 		return header, "", ""
 	}
-	bodyAndFooters := parts[1]
-	paragraphs := regexp.MustCompile("\n\n").Split(bodyAndFooters, -1)
+	paragraphs := paragraphSep.Split(parts[1], -1)
 	footerStartIndex := len(paragraphs)
 	for i := len(paragraphs) - 1; i >= 0; i-- {
-		p := paragraphs[i]
-		isFooter := footerRegex.MatchString(p)
-		if isFooter {
-			footerStartIndex = i
-		} else {
+		if !footerRegex.MatchString(paragraphs[i]) {
 			break
 		}
+		footerStartIndex = i
 	}
 	body = strings.Join(paragraphs[:footerStartIndex], "\n\n")
 	footers = strings.Join(paragraphs[footerStartIndex:], "\n\n")
 	return header, body, footers
 }
 
-// --- NOVA FUNÇÃO AUXILIAR ---
-// Converte a string do YAML (ex: "patch") para o tipo Increment
 func stringToIncrement(releaseType string) Increment {
 	switch strings.ToLower(releaseType) {
 	case "major":
@@ -73,8 +65,6 @@ func stringToIncrement(releaseType string) Increment {
 	}
 }
 
-// --- NOVA FUNÇÃO AUXILIAR ---
-// Converte as regras do config em um mapa para consulta rápida
 func mapConfigToIncrements(rules []config.ReleaseRule) map[string]Increment {
 	ruleMap := make(map[string]Increment)
 	for _, rule := range rules {
@@ -83,136 +73,115 @@ func mapConfigToIncrements(rules []config.ReleaseRule) map[string]Increment {
 	return ruleMap
 }
 
-// --- ASSINATURA ATUALIZADA ---
-// Agora recebe 'cfg *config.Config' como o primeiro parâmetro
-func DetermineNextVersion(cfg *config.Config, latestTag string, commits []string, preReleaseChannel string) (string, Increment, error) {
-
-	// 1. Parse da última tag (Intacto)
-	if latestTag == "v0.0.0" {
-		latestTag = "0.0.0"
-	}
-	v, err := semver.NewVersion(strings.TrimPrefix(latestTag, "v"))
+// parseTag parses a SemVer tag with an optional "v" prefix. Tags that are not
+// SemVer (e.g. "latest") return nil (spec 001 FR-5).
+func parseTag(tag string) *semver.Version {
+	v, err := semver.StrictNewVersion(strings.TrimPrefix(tag, "v"))
 	if err != nil {
-		return "", IncrementNone, fmt.Errorf("erro ao analisar a última tag '%s': %v", latestTag, err)
+		return nil
 	}
+	return v
+}
 
-	// --- 2. LÓGICA DE INCREMENTO ATUALIZADA ---
-	highestIncrement := IncrementNone
-	// Converte as regras do .yml em um mapa de consulta
-	releaseRules := mapConfigToIncrements(cfg.ReleaseRules)
-
-	log.Printf("Iniciando análise de %d commits...", len(commits))
-	for _, commit := range commits {
-		cleanCommit := strings.TrimSpace(commit)
-		if cleanCommit == "" {
+// LatestStable returns the highest stable SemVer tag among tags, or "" when
+// there is none (spec 001 FR-1).
+func LatestStable(tags []string) string {
+	var best *semver.Version
+	bestTag := ""
+	for _, t := range tags {
+		v := parseTag(t)
+		if v == nil || v.Prerelease() != "" {
 			continue
 		}
-		header, _, footers := parseCommit(cleanCommit)
-		log.Printf("Analisando header: [%.70s]", header)
+		if best == nil || v.GreaterThan(best) {
+			best, bestTag = v, t
+		}
+	}
+	return bestTag
+}
 
+// Analyze returns the highest increment required by commits.
+func Analyze(cfg *config.Config, commits []string) Increment {
+	highest := IncrementNone
+	rules := mapConfigToIncrements(cfg.ReleaseRules)
+	for _, commit := range commits {
+		header, _, footers := parseCommit(commit)
 		matches := commitRegex.FindStringSubmatch(header)
 		if matches == nil {
 			log.Printf("Commit não convencional, ignorando: [%.70s]", header)
 			continue
 		}
-
-		commitType := matches[1]
-		isHeaderBreaking := matches[3] == "!"
-
-		// Lógica de Breaking Change (permanece intacta, 'breaking' sempre vence)
-		isFooterBreaking := false
-		if footers != "" {
-			footerLines := strings.Split(footers, "\n")
-			for _, line := range footerLines {
-				trimmedLine := strings.TrimSpace(line)
-				if strings.HasPrefix(trimmedLine, "BREAKING CHANGE:") || strings.HasPrefix(trimmedLine, "BREAKING-CHANGE:") {
-					isFooterBreaking = true
-					log.Println("Encontrado 'BREAKING CHANGE' no footer.")
-					break
-				}
-			}
+		inc := rules[matches[1]]
+		if matches[3] == "!" || hasBreakingFooter(footers) {
+			inc = IncrementMajor
 		}
-		isBreaking := isHeaderBreaking || isFooterBreaking
-
-		// --- LÓGICA DE INCREMENTO SUBSTITUÍDA ---
-		// Em vez de 'if/else' para 'feat' e 'fix', usamos o mapa de regras
-		if isBreaking {
-			if highestIncrement < IncrementMajor {
-				highestIncrement = IncrementMajor
-			}
-		} else {
-			// Consulta o tipo de commit (ex: "docs") no mapa de regras
-			inc, ok := releaseRules[commitType]
-			if !ok {
-				// Se o tipo não estiver no mapa (ex: "security"), não faz nada
-				inc = IncrementNone
-			}
-
-			// Atualiza o incremento mais alto encontrado
-			if inc > highestIncrement {
-				highestIncrement = inc
-			}
+		if inc > highest {
+			highest = inc
 		}
-		// --- FIM DA LÓGICA SUBSTITUÍDA ---
 	}
-	log.Printf("Análise concluída. Maior incremento: %s", highestIncrement)
+	return highest
+}
 
-	// 3. Se nenhum incremento for encontrado (Intacto)
-	if highestIncrement == IncrementNone {
-		return "v" + v.String(), IncrementNone, nil
+func hasBreakingFooter(footers string) bool {
+	for _, line := range strings.Split(footers, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "BREAKING CHANGE:") || strings.HasPrefix(line, "BREAKING-CHANGE:") {
+			return true
+		}
+	}
+	return false
+}
+
+// DetermineNextVersion computes the next version from the latest stable tag
+// (base, "" when the repository has none), the commits since it, the
+// pre-release channel ("" for a stable release) and every existing tag, used
+// to continue a pre-release counter (spec 001 FR-1 to FR-3).
+func DetermineNextVersion(cfg *config.Config, base string, commits []string, channel string, allTags []string) (string, Increment, error) {
+	current := semver.New(0, 0, 0, "", "")
+	if base != "" {
+		current = parseTag(base)
+		if current == nil {
+			return "", IncrementNone, fmt.Errorf("a tag base '%s' não é SemVer", base)
+		}
 	}
 
-	// 4. Calcular a nova versão ESTÁVEL (Intacto)
-	var nextStableVersion semver.Version
-	switch highestIncrement {
+	inc := Analyze(cfg, commits)
+	log.Printf("Análise concluída. Maior incremento: %s", inc)
+	if inc == IncrementNone {
+		return "v" + current.String(), IncrementNone, nil
+	}
+
+	// SemVer §4: while in 0.x, an incompatible change bumps the minor.
+	if inc == IncrementMajor && current.Major() == 0 {
+		inc = IncrementMinor
+	}
+	var next semver.Version
+	switch inc {
 	case IncrementMajor:
-		if v.Major() == 0 {
-			nextStableVersion = v.IncMajor()
-		} else {
-			nextStableVersion = v.IncMajor()
-		}
+		next = current.IncMajor()
 	case IncrementMinor:
-		nextStableVersion = v.IncMinor()
-	case IncrementPatch:
-		nextStableVersion = v.IncPatch()
+		next = current.IncMinor()
+	default:
+		next = current.IncPatch()
 	}
 
-	// 5. LÓGICA DE PRÉ-RELEASE (Intacta, já funciona com a lógica acima)
-	if preReleaseChannel == "" {
-		return "v" + nextStableVersion.String(), highestIncrement, nil
+	if channel == "" {
+		return "v" + next.String(), inc, nil
 	}
-
-	baseVersionStr := "v" + nextStableVersion.String()
-	latestPreTagString, err := git.GetLatestPreReleaseTag(baseVersionStr, preReleaseChannel)
-	if err != nil {
-		return "", highestIncrement, fmt.Errorf("erro ao buscar tags de pré-release: %v", err)
-	}
-
-	var nextVersionString string
-	if latestPreTagString == "" {
-		nextVersionString = fmt.Sprintf("%s-%s.1", baseVersionStr, preReleaseChannel)
-	} else {
-		vPre, err := semver.NewVersion(strings.TrimPrefix(latestPreTagString, "v"))
-		if err != nil {
-			return "", highestIncrement, fmt.Errorf("erro ao analisar tag de pré-release '%s': %v", latestPreTagString, err)
+	n := 0
+	prefix := channel + "."
+	for _, t := range allTags {
+		v := parseTag(t)
+		if v == nil || v.Major() != next.Major() || v.Minor() != next.Minor() || v.Patch() != next.Patch() {
+			continue
 		}
-		prStr := vPre.Prerelease()
-		parts := strings.Split(prStr, ".")
-		lastPart := parts[len(parts)-1]
-		num, err := strconv.Atoi(lastPart)
-		if err != nil {
-			prStr = prStr + ".1"
-		} else {
-			num++
-			parts[len(parts)-1] = strconv.Itoa(num)
-			prStr = strings.Join(parts, ".")
+		pre := v.Prerelease()
+		if !strings.HasPrefix(pre, prefix) {
+			continue
 		}
-		vNextPre, err := vPre.SetPrerelease(prStr)
-		if err != nil {
-			return "", highestIncrement, fmt.Errorf("erro ao definir pré-release '%s': %v", prStr, err)
+		if k, err := strconv.Atoi(strings.TrimPrefix(pre, prefix)); err == nil && k > n {
+			n = k
 		}
-		nextVersionString = "v" + vNextPre.String()
 	}
-
-	return nextVersionString, highestIncrement, nil
+	return fmt.Sprintf("v%s-%s.%d", next.String(), channel, n+1), inc, nil
 }
