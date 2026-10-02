@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"regexp"
 	"strings"
 	"testing"
@@ -263,5 +264,29 @@ func TestNoColorWhenPiped(t *testing.T) {
 	}
 	if strings.Contains(string(out), "\x1b[") {
 		t.Errorf("saída com códigos de cor fora de um terminal:\n%q", out)
+	}
+}
+
+// The version recorded by `go install module@v1.2.3` is used when no
+// -ldflags version was embedded (issue #32).
+func TestResolveVersion(t *testing.T) {
+	bi := func(v string) func() (*debug.BuildInfo, bool) {
+		return func() (*debug.BuildInfo, bool) {
+			return &debug.BuildInfo{Main: debug.Module{Version: v}}, true
+		}
+	}
+	cases := []struct{ embedded, module, want string }{
+		{"1.2.3", "v9.9.9", "1.2.3"},
+		{"dev", "v0.13.0", "v0.13.0"},
+		{"dev", "(devel)", "dev"},
+		{"dev", "", "dev"},
+		{"dev", "v0.8.0-beta.2.0.20261002021544-b8b6d7adb7c6+dirty", "dev"},
+		{"dev", "v0.12.1-0.20261002021544-b8b6d7adb7c6", "dev"},
+		{"dev", "v1.0.0-rc.1", "v1.0.0-rc.1"},
+	}
+	for _, c := range cases {
+		if got := resolveVersion(c.embedded, bi(c.module)); got != c.want {
+			t.Errorf("resolveVersion(%q, %q) = %q, quero %q", c.embedded, c.module, got, c.want)
+		}
 	}
 }
