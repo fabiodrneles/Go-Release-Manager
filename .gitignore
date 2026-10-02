@@ -1,0 +1,8 @@
+# Binários e saídas de build (spec 003 FR-4)
+/go-release-manager
+*.exe
+*.dll
+*.so
+*.dylib
+/dist/
+/coverage.out
