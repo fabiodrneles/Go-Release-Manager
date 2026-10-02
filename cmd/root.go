@@ -51,7 +51,13 @@ func init() {
 	rootCmd.Long = fmt.Sprintf("%s\n%s\n%s", asciiArt, tagline, description)
 }
 
-func Execute() {
+// Execute runs the CLI. version and commit come from the release build.
+func Execute(version, commit string) {
+	rootCmd.Version = version
+	if commit != "" {
+		rootCmd.Version = version + " (" + commit + ")"
+	}
+	rootCmd.SetVersionTemplate("{{.Version}}\n")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, color.RedString("Ocorreu um erro: '%s'"), err)
 		os.Exit(1)
