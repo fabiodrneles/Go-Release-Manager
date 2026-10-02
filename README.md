@@ -112,6 +112,10 @@ jobs:
 
 O `checkout` precisa de `fetch-depth: 0` para enxergar as tags. A tag criada com o `GITHUB_TOKEN` padrão **não dispara** outros workflows (regra do GitHub); para disparar o seu workflow de release, use um token de app ou PAT em `token`, ou chame o build no mesmo workflow.
 
+### Criar a tag pelo GitHub
+
+O workflow [Release tag](.github/workflows/release-tag.yml) deste repositório mostra o fluxo completo: um clique em *Actions → Release tag → Run workflow* cria a tag, com a versão calculada ou informada (`release-as`, `ref`), e publica a release no mesmo fluxo. Uma tag criada com o `GITHUB_TOKEN` não dispara outros workflows, por isso o release é chamado diretamente, com `workflow_call`.
+
 ### Com o sdd-kit
 
 No processo do [sdd-kit](https://github.com/fabiodrneles/sdd-kit), o plugin `sdd-release` usa esta ferramenta para propor a versão da próxima release a partir dos commits da fase e preparar o PR de fechamento.
