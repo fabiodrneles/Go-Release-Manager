@@ -4,7 +4,7 @@ GOLANGCI_LINT_VERSION := v2.14.0
 .DEFAULT_GOAL := ci
 
 .PHONY: ci
-ci: lint test build no-binaries ## Tudo o que o CI verifica
+ci: lint test build no-binaries go-version ## Tudo o que o CI verifica
 
 .PHONY: lint
 lint: ## golangci-lint
@@ -29,3 +29,7 @@ sdd-check: ## Rastreabilidade specs × testes × ROADMAP (falha se houver aviso)
 .PHONY: no-binaries
 no-binaries: ## Nenhum binário versionado (spec 003 AC-3)
 	sh scripts/check-binaries.sh
+
+.PHONY: go-version
+go-version: ## Workflows e Dockerfile seguem a versão do go.mod
+	sh scripts/check-go-version.sh
