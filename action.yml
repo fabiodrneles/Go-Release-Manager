@@ -7,13 +7,19 @@ branding:
 
 inputs:
   version:
-    description: Versão do go-release-manager a instalar (ex. v0.12.0) ou "latest".
+    description: Versão do go-release-manager a instalar (ex. v1.1.0), "latest" ou "source" (compila o código da própria Action; requer Go).
     default: latest
   create:
     description: '"true" cria e empurra a tag; senão só calcula.'
     default: "false"
   pre-release:
     description: Canal de pré-release (ex. beta, rc).
+    default: ""
+  release-as:
+    description: Força esta versão (vX.Y.Z) no lugar da calculada.
+    default: ""
+  ref:
+    description: Commit ou branch onde analisar e criar a tag (padrão HEAD).
     default: ""
   working-directory:
     description: Repositório git a analisar.
@@ -35,6 +41,12 @@ outputs:
   created:
     description: '"true" se a tag foi criada e empurrada.'
     value: ${{ steps.run.outputs.created }}
+  ref:
+    description: Commit (abreviado) onde a tag foi ou seria criada.
+    value: ${{ steps.run.outputs.ref }}
+  forced:
+    description: '"true" se a versão veio de release-as.'
+    value: ${{ steps.run.outputs.forced }}
 
 runs:
   using: composite
@@ -47,6 +59,13 @@ runs:
       run: |
         set -euo pipefail
         repo=fabiodrneles/go-release-manager
+        dir="$RUNNER_TEMP/go-release-manager"
+        mkdir -p "$dir"
+        if [ "$VERSION" = source ]; then
+          (cd "$GITHUB_ACTION_PATH" && go build -o "$dir/go-release-manager" .)
+          echo "$dir" >> "$GITHUB_PATH"
+          exit 0
+        fi
         if [ "$VERSION" = latest ]; then
           VERSION=$(gh api "repos/$repo/releases/latest" --jq .tag_name)
         fi
@@ -62,8 +81,6 @@ runs:
           *) echo "arquitetura não suportada: $RUNNER_ARCH" >&2; exit 1 ;;
         esac
         asset="go-release-manager_${VERSION#v}_${os}_${arch}.${ext}"
-        dir="$RUNNER_TEMP/go-release-manager"
-        mkdir -p "$dir"
         gh release download "$VERSION" -R "$repo" -p "$asset" -p checksums.txt -D "$dir" --clobber
         sum=sha256sum
         command -v sha256sum >/dev/null || sum="shasum -a 256"
@@ -84,14 +101,18 @@ runs:
         GITHUB_TOKEN: ${{ inputs.token }}
         CREATE: ${{ inputs.create }}
         CHANNEL: ${{ inputs.pre-release }}
+        RELEASE_AS: ${{ inputs.release-as }}
+        REF: ${{ inputs.ref }}
       run: |
         set -euo pipefail
         args=(create --output json)
         [ "$CREATE" = true ] || args+=(--dry-run)
         [ -z "$CHANNEL" ] || args+=(--pre-release "$CHANNEL")
+        [ -z "$RELEASE_AS" ] || args+=(--release-as "$RELEASE_AS")
+        [ -z "$REF" ] || args+=(--ref "$REF")
         json=$(go-release-manager "${args[@]}")
         echo "$json"
-        for k in next previous increment created; do
+        for k in next previous increment created ref forced; do
           # "// empty" would also drop false, so convert explicitly.
           echo "$k=$(jq -r ".$k | if . == null then \"\" else tostring end" <<<"$json")" >> "$GITHUB_OUTPUT"
         done

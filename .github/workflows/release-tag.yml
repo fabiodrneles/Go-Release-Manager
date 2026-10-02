@@ -1,0 +1,53 @@
+# Cria a tag da próxima versão e publica a release (spec 004 FR-5).
+# Disparo manual: Actions → Release tag → Run workflow.
+name: Release tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-as:
+        description: Versão (vX.Y.Z); vazio para calcular pelos commits
+        required: false
+        default: ""
+      ref:
+        description: Commit ou branch onde criar a tag (padrão main)
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.version.outputs.next }}
+      created: ${{ steps.version.outputs.created }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - id: version
+        uses: ./
+        with:
+          version: source
+          create: true
+          release-as: ${{ inputs.release-as }}
+          ref: ${{ inputs.ref }}
+      - name: Resumo
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+          REF: ${{ steps.version.outputs.ref }}
+        run: echo "### Tag ${NEXT:-nenhuma (sem commits que gerem release)} em ${REF}" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    needs: tag
+    if: needs.tag.outputs.created == 'true'
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.tag.outputs.next }}
+    secrets: inherit

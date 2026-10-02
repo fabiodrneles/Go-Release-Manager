@@ -38,6 +38,16 @@ jobs:
           version: v0.12.0
           pre-release: rc
           working-directory: ${{ env.SAMPLE }}
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      # 004 AC-4: release-as com o binário compilado do código deste commit.
+      - id: forced
+        uses: ./
+        with:
+          version: source
+          release-as: v1.5.0
+          working-directory: ${{ env.SAMPLE }}
       # 003 AC-4
       - name: Confere os outputs
         shell: bash
@@ -46,8 +56,12 @@ jobs:
           PREVIOUS: ${{ steps.grm.outputs.previous }}
           CREATED: ${{ steps.grm.outputs.created }}
           RC: ${{ steps.beta.outputs.next }}
+          FORCED: ${{ steps.forced.outputs.next }}
+          FORCED_FLAG: ${{ steps.forced.outputs.forced }}
         run: |
           test "$NEXT" = v1.0.1
           test "$PREVIOUS" = v1.0.0
           test "$CREATED" = false
           test "$RC" = v1.0.1-rc.1
+          test "$FORCED" = v1.5.0
+          test "$FORCED_FLAG" = true
