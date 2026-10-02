@@ -1,0 +1,96 @@
+name: go-release-manager
+description: Calcula (e opcionalmente cria) a próxima tag SemVer a partir de Conventional Commits.
+author: Fabio Dorneles
+branding:
+  icon: tag
+  color: blue
+
+inputs:
+  version:
+    description: Versão do go-release-manager a instalar (ex. v0.12.0) ou "latest".
+    default: latest
+  create:
+    description: '"true" cria e empurra a tag; senão só calcula.'
+    default: "false"
+  pre-release:
+    description: Canal de pré-release (ex. beta, rc).
+    default: ""
+  working-directory:
+    description: Repositório git a analisar.
+    default: "."
+  token:
+    description: Token para baixar a release e, com create, empurrar a tag.
+    default: ${{ github.token }}
+
+outputs:
+  next:
+    description: Próxima versão (vazio se não há release).
+    value: ${{ steps.run.outputs.next }}
+  previous:
+    description: Última versão estável.
+    value: ${{ steps.run.outputs.previous }}
+  increment:
+    description: None, Patch, Minor ou Major.
+    value: ${{ steps.run.outputs.increment }}
+  created:
+    description: '"true" se a tag foi criada e empurrada.'
+    value: ${{ steps.run.outputs.created }}
+
+runs:
+  using: composite
+  steps:
+    - name: Instala o go-release-manager
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        repo=fabiodrneles/go-release-manager
+        if [ "$VERSION" = latest ]; then
+          VERSION=$(gh api "repos/$repo/releases/latest" --jq .tag_name)
+        fi
+        case "$RUNNER_OS" in
+          Linux) os=Linux ext=tar.gz ;;
+          macOS) os=Darwin ext=tar.gz ;;
+          Windows) os=Windows ext=zip ;;
+          *) echo "sistema não suportado: $RUNNER_OS" >&2; exit 1 ;;
+        esac
+        case "$RUNNER_ARCH" in
+          X64) arch=x86_64 ;;
+          ARM64) arch=arm64 ;;
+          *) echo "arquitetura não suportada: $RUNNER_ARCH" >&2; exit 1 ;;
+        esac
+        asset="go-release-manager_${VERSION#v}_${os}_${arch}.${ext}"
+        dir="$RUNNER_TEMP/go-release-manager"
+        mkdir -p "$dir"
+        gh release download "$VERSION" -R "$repo" -p "$asset" -p checksums.txt -D "$dir" --clobber
+        sum=sha256sum
+        command -v sha256sum >/dev/null || sum="shasum -a 256"
+        (cd "$dir" && grep " $asset\$" checksums.txt | $sum -c -)
+        if [ "$ext" = zip ]; then
+          if command -v unzip >/dev/null; then unzip -o -q "$dir/$asset" -d "$dir"
+          else pwsh -NoProfile -Command "Expand-Archive -Force '$dir/$asset' '$dir'"; fi
+        else
+          tar xzf "$dir/$asset" -C "$dir"
+        fi
+        echo "$dir" >> "$GITHUB_PATH"
+
+    - name: Calcula a próxima versão
+      id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        CREATE: ${{ inputs.create }}
+        CHANNEL: ${{ inputs.pre-release }}
+      run: |
+        set -euo pipefail
+        args=(create --output json)
+        [ "$CREATE" = true ] || args+=(--dry-run)
+        [ -z "$CHANNEL" ] || args+=(--pre-release "$CHANNEL")
+        json=$(go-release-manager "${args[@]}")
+        echo "$json"
+        for k in next previous increment created; do
+          echo "$k=$(jq -r ".$k // \"\"" <<<"$json")" >> "$GITHUB_OUTPUT"
+        done
