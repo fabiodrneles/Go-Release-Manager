@@ -16,11 +16,12 @@ Cada tarefa referencia a spec e os critérios de aceite que ela fecha. Ordem sug
 
 ## Fase 2 — Confiável (P1) → `v0.12.0`
 
-- [ ] **T6** `--version` e versão embutida — 002 FR-1, AC-1
-- [ ] **T7** Token só quando há push; remover `internal/provider` — 002 FR-2, AC-2
-- [ ] **T8** Subcomando `next` e `--output json` — 002 FR-3, FR-4, FR-5, AC-3, AC-4
-- [ ] **T9** README correto e comandos verificados no CI; cores com `NO_COLOR` — 002 FR-6, AC-5
-- [ ] **T10** Release com `make ci` antes e `prerelease: auto` — 003 FR-2, FR-3, AC-2
+- [x] **T6** `--version` e versão embutida — 002 FR-1, AC-1
+- [x] **T7** Token só quando há push; remover `internal/provider` — 002 FR-2, AC-2
+- [x] **T8** Subcomando `next` e `--output json` — 002 FR-3, FR-4, FR-5, AC-3, AC-4
+- [x] **T9** README correto e comandos verificados no CI; cores com `NO_COLOR` — 002 FR-6, AC-5
+- [x] **T10** Release com `make ci` antes e `prerelease: auto` — 003 FR-2, FR-3, AC-2
+- [x] **T10b** Caminho do módulo do GitHub para o `go install` funcionar (achado durante o T9, #26)
 
 ## Fase 3 — Profissional (P2) → `v1.0.0`
 

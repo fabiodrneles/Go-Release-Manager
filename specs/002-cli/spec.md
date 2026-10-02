@@ -1,7 +1,7 @@
 # 002 — Interface de linha de comando
 
 - **Prioridade:** P1
-- **Status:** Approved — decisões respondidas pelo dono em 2026-10-02
+- **Status:** Done — entregue na `v0.12.0`
 - **Código afetado:** `cmd/`, `main.go`, `internal/auth`, `internal/provider`, `README.md`
 - **Resolve:** A3, A5, M1, M4, B3
 

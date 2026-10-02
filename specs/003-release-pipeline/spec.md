@@ -1,7 +1,7 @@
 # 003 — CI e pipeline de release
 
 - **Prioridade:** P0
-- **Status:** Approved — AC-1 e AC-3 já entregues na `v0.11.0`; AC-2 e AC-4 nas Fases 2 e 3
+- **Status:** Approved — AC-1 e AC-3 entregues na `v0.11.0`, AC-2 na `v0.12.0`; AC-4 na Fase 3
 - **Código afetado:** `.github/workflows/`, `.goreleaser.yml`, `Makefile`, `action.yml`
 - **Resolve:** A1, A2, A4, M5
 
