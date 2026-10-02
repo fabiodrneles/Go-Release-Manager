@@ -1,31 +1,37 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Config é a estrutura principal do arquivo .go-releaserc.yml
+// FileName is the optional configuration file read from the repository root.
+const FileName = ".go-releaserc.yml"
+
+// Config is the content of .go-releaserc.yml.
 type Config struct {
 	ReleaseRules []ReleaseRule `yaml:"releaseRules"`
 }
 
-// ReleaseRule define como um tipo de commit afeta a versão
+// ReleaseRule defines how a commit type affects the version.
 type ReleaseRule struct {
 	Type    string `yaml:"type"`
 	Release string `yaml:"release"` // "major", "minor", "patch", "none"
 }
 
-// defaultConfig retorna a configuração padrão (o comportamento atual)
-// caso nenhum .go-releaserc.yml seja encontrado.
-func defaultConfig() *Config {
+var validReleases = map[string]bool{"major": true, "minor": true, "patch": true, "none": true}
+
+// Default returns the built-in rules: feat → minor, fix → patch, other
+// conventional types → none.
+func Default() *Config {
 	return &Config{
 		ReleaseRules: []ReleaseRule{
 			{Type: "feat", Release: "minor"},
 			{Type: "fix", Release: "patch"},
-			// Por padrão, outros tipos não geram release
 			{Type: "docs", Release: "none"},
 			{Type: "style", Release: "none"},
 			{Type: "refactor", Release: "none"},
@@ -38,34 +44,48 @@ func defaultConfig() *Config {
 	}
 }
 
-// LoadConfig procura, lê e analisa o arquivo .go-releaserc.yml.
-// Se não encontrar, retorna a configuração padrão.
+// LoadConfig reads .go-releaserc.yml from the current directory. Without the
+// file it returns the default rules.
 func LoadConfig() (*Config, error) {
-	configFileName := ".go-releaserc.yml"
-
-	// 1. Tenta ler o arquivo de configuração
-	data, err := os.ReadFile(configFileName)
+	data, err := os.ReadFile(FileName)
 	if err != nil {
-		// Se o erro for 'file not found', não é um erro fatal.
-		// Apenas usamos a configuração padrão.
 		if os.IsNotExist(err) {
 			log.Println("Nenhum .go-releaserc.yml encontrado. Usando regras padrão (feat/fix).")
-			return defaultConfig(), nil
+			return Default(), nil
 		}
-		// Outro erro (ex: permissão de leitura)
 		return nil, err
 	}
-
-	// 2. Arquivo encontrado, vamos analisá-lo (parse)
 	log.Println("Arquivo .go-releaserc.yml encontrado. Carregando regras personalizadas.")
+	return Parse(data)
+}
 
-	// Começa com os padrões, para que o usuário precise definir apenas o que quer mudar
-	config := defaultConfig()
-
-	err = yaml.Unmarshal(data, &config)
-	if err != nil {
-		return nil, err
+// Parse merges the rules in data over the default rules: a type listed in the
+// file overrides the default for that type only (spec 001 FR-4).
+func Parse(data []byte) (*Config, error) {
+	var file Config
+	if err := yaml.Unmarshal(data, &file); err != nil {
+		return nil, fmt.Errorf("%s inválido: %w", FileName, err)
 	}
+	cfg := Default()
+	for _, rule := range file.ReleaseRules {
+		release := strings.ToLower(strings.TrimSpace(rule.Release))
+		if rule.Type == "" {
+			return nil, fmt.Errorf("%s: regra sem \"type\"", FileName)
+		}
+		if !validReleases[release] {
+			return nil, fmt.Errorf("%s: tipo %q com release %q inválido (use major, minor, patch ou none)", FileName, rule.Type, rule.Release)
+		}
+		cfg.set(ReleaseRule{Type: rule.Type, Release: release})
+	}
+	return cfg, nil
+}
 
-	return config, nil
+func (c *Config) set(rule ReleaseRule) {
+	for i := range c.ReleaseRules {
+		if c.ReleaseRules[i].Type == rule.Type {
+			c.ReleaseRules[i] = rule
+			return
+		}
+	}
+	c.ReleaseRules = append(c.ReleaseRules, rule)
 }
