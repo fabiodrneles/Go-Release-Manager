@@ -46,15 +46,6 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 
 	Run: func(cmd *cobra.Command, args []string) {
 
-		// --- LÓGICA DE AUTENTICAÇÃO (ATUALIZADA) ---
-		// Tenta GITHUB_TOKEN, e se falhar, tenta 'gh auth token'
-		// O token em si não é usado diretamente aqui, mas o 'gh' configura o git.
-		// A verificação é crucial para falhar rápido se nenhuma auth estiver disponível.
-		_, err := auth.GetToken()
-		if err != nil {
-			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o pela variável de ambiente GITHUB_TOKEN, ou faça login com o GitHub CLI (`gh auth login`).\nErro original: %v", err))
-		}
-		// --- FIM DA LÓGICA DE AUTENTICAÇÃO ---
 
 		// --- CARREGAR CONFIGURAÇÃO (Intacto) ---
 		cfg, err := config.LoadConfig()
@@ -116,7 +107,12 @@ cria e empurra a tag. O release do GitHub (com os binários) será criado automa
 			return
 		}
 
-		// 5. Criar e empurrar a tag (INTACTA)
+		// 5. Credenciais só são exigidas quando há push (spec 002 FR-2).
+		if _, err := auth.GetToken(); err != nil {
+			log.Fatalf("%s", color.RedString("Erro: Token de acesso não fornecido.\nDefina-o pela variável de ambiente GITHUB_TOKEN, ou faça login com o GitHub CLI (`gh auth login`).\nErro original: %v", err))
+		}
+
+		// 6. Criar e empurrar a tag
 		log.Printf("Criando tag git '%s'...", nextVersion)
 		if err := git.CreateTag(nextVersion); err != nil {
 			log.Fatalf(color.RedString("Erro ao criar tag: %v"), err)
