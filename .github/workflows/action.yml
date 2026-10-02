@@ -1,0 +1,53 @@
+name: Action
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Action (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Repositório de exemplo (v1.0.0 + fix)
+        shell: bash
+        run: |
+          d="$RUNNER_TEMP/sample"
+          git init -q "$d"
+          git -C "$d" -c user.name=t -c user.email=t@t commit -q --allow-empty -m "feat: a"
+          git -C "$d" tag v1.0.0
+          git -C "$d" -c user.name=t -c user.email=t@t commit -q --allow-empty -m "fix: b"
+          echo "SAMPLE=$d" >> "$GITHUB_ENV"
+      - id: grm
+        uses: ./
+        with:
+          version: v0.12.0
+          working-directory: ${{ env.SAMPLE }}
+      - id: beta
+        uses: ./
+        with:
+          version: v0.12.0
+          pre-release: rc
+          working-directory: ${{ env.SAMPLE }}
+      # 003 AC-4
+      - name: Confere os outputs
+        shell: bash
+        env:
+          NEXT: ${{ steps.grm.outputs.next }}
+          PREVIOUS: ${{ steps.grm.outputs.previous }}
+          CREATED: ${{ steps.grm.outputs.created }}
+          RC: ${{ steps.beta.outputs.next }}
+        run: |
+          test "$NEXT" = v1.0.1
+          test "$PREVIOUS" = v1.0.0
+          test "$CREATED" = false
+          test "$RC" = v1.0.1-rc.1
