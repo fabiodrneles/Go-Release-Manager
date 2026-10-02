@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: make ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Versão do golangci-lint (Makefile)
+        id: lint
+        run: echo "version=$(sed -n 's/^GOLANGCI_LINT_VERSION *:= *//p' Makefile)" >> "$GITHUB_OUTPUT"
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: ${{ steps.lint.outputs.version }}
+          install-only: true
+      - run: make ci
