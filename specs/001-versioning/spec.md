@@ -1,7 +1,7 @@
 # 001 — Cálculo da próxima versão
 
 - **Prioridade:** P0
-- **Status:** Approved — decisões respondidas pelo dono em 2026-10-02
+- **Status:** Done — entregue na `v0.11.0`
 - **Código afetado:** `internal/semver`, `internal/config`, `internal/git`
 - **Resolve:** C1, C2, M2, M3, B1
 
