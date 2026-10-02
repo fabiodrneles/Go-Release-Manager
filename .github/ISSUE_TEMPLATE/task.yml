@@ -1,0 +1,44 @@
+name: Tarefa
+description: Nova funcionalidade, melhoria ou tarefa técnica, no formato usado nas fases do roadmap
+labels: []
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Qual problema isto resolve, e para quem?
+    validations:
+      required: true
+  - type: textarea
+    id: todo
+    attributes:
+      label: O que fazer
+      description: A mudança proposta, em itens
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      description: Condições verificáveis (de preferência, por teste automatizado)
+      placeholder: |
+        - Dado ..., quando ..., então ...
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Spec(s) afetada(s)
+      placeholder: "003 (FR-8), ou: nova spec"
+  - type: dropdown
+    id: type
+    attributes:
+      label: Tipo
+      options: [feature, docs, ci, teste, chore]
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options: [P1 (alta), P2 (média), P3 (baixa)]

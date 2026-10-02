@@ -1,0 +1,11 @@
+# Verificação de links da documentação. Roda no CI (workflow "docs").
+exclude_path = ["node_modules", "dist"]
+
+exclude = [
+  '^mailto:',
+  # Links de versão do CHANGELOG e da release: só existem depois da tag do dono.
+  '^https://github\.com/fabiodrneles/go-release-manager/(compare|releases)',
+]
+
+max_retries = 3
+accept = ["200..=299", "429"]

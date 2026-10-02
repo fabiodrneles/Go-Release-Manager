@@ -1,0 +1,11 @@
+# Lint de Markdown. Roda no CI (workflow "docs") e com "make ci".
+config:
+  MD013: false # tamanho de linha: textos longos são esperados
+  MD060: false # estilo de espaçamento do separador de tabela (|---|)
+  MD024:
+    siblings_only: true # o CHANGELOG repete "Adicionado"/"Alterado" em cada versão
+globs:
+  - "**/*.md"
+ignores:
+  - "node_modules/**"
+  - "dist/**"

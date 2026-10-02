@@ -1,0 +1,33 @@
+{
+  "kit": "sdd-kit",
+  "version": "v0.1.0",
+  "lang": "go",
+  "project": "go-release-manager",
+  "owner": "fabiodrneles",
+  "repo": "go-release-manager",
+  "files": {
+    ".claude/settings.json": "39bb8a6935b08e49ad68b96e23136cd8e0ab012a1e8dca60c01ab2506fb21651",
+    ".github/CODEOWNERS": "38eb4217ea0c5e6aed6896bc2b12313cda972dcf8c8c8befd5857b2fbab5f537",
+    ".github/ISSUE_TEMPLATE/bug.yml": "db9bc120441ec8d15263a7381d0c2bbc8c458f2ea141d64b032aa489b22a9b4e",
+    ".github/ISSUE_TEMPLATE/config.yml": "3a80c928195808293783a37d12b120068c463a48da5453131da79fb4735a3f1b",
+    ".github/ISSUE_TEMPLATE/task.yml": "abac7a096c30599e6bc931d30c69d8ac8c7515a049713e2b2ebc70d09f1b9fcb",
+    ".github/pull_request_template.md": "73acec5d330e225529916e2a260b440736df022f40dbbb84b039203a21f549eb",
+    ".github/workflows/docs.yml": "4ad615439faf08407631c06e3ee59d4db449d2b8e3f833fa877df94b57f92765",
+    ".github/workflows/sdd-sync.yml": "3b23b046ac2d52a833b49f29c5745b35c9f563ad17651eda5a412a703121adaa",
+    ".markdownlint-cli2.yaml": "17d387a31b80b899acd9136c2dfc448aaab3a281a130dd4b4dcf3f73afa95e01",
+    "AGENTS.md": "7cddd4b41f6c9c46c1d614664098e87a0be372d377ea475d0fe19b4a36bf5192",
+    "CLAUDE.md": "3af65ca3d0e7f024b90fe40e4d7340ab7cc8c3c05b8ce7facfa26e79ca0d4064",
+    "CONTRIBUTING.md": "909d739e478cad857bb5f1c4e2b3b7c134addf91197b33b57c2b990c0ec2791a",
+    "lychee.toml": "84d94857d7d8dab6d6008c85cf7da387b3501ee77780cf033d90e546d2e4c2fa",
+    "scripts/sdd-check.sh": "934508ec324de784e6b98d7c11acdb85294486a100bbcbc99726da01ad29f3e1",
+    "scripts/sdd-sync.sh": "9c094bb926b5fc5b4911195dbe06df0cdbe3dac991f74b987b164db77da514eb",
+    "specs/ANALYSIS.md": "8e335d0e6bcfed97016bc07177d381c54adf07b708d4e080418f823e41fa6a72",
+    "specs/README.md": "37e416cefdfcc43b7356872a5bc4fc49a0ccb5d8a42ff0111edc176a58895f59",
+    "specs/ROADMAP.md": "5f4e489907ec0c969eefac0797c424303898a528ad9b2a93e9fd2761828c4078",
+    "specs/constitution.md": "16e13ddd255dc43816ccab3b99af404f9490d2b92bf3280521d5af21969cc922",
+    ".claude/hooks/session-start.sh": "96472c8fefba0ae407577c8709994444cca4d8a799b84da6d013934ce6950902",
+    ".github/dependabot.yml": "8b67254cd433436e6811cbd46df250a14e5fa15e7c15b030529d22d4ddb1ab0d",
+    ".github/workflows/ci.yml": "7242f7710c9b45af49f53d82bbcf529d0327cf714d904258f00a3f8cb60bc798",
+    "Makefile": "e5427c906ca23b50ec80d271b7f6de9ea5e12054b381a5f060408fbf222a30ce"
+  }
+}

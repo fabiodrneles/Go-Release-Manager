@@ -1,0 +1,32 @@
+name: Bug
+description: Algo não funciona como o README ou as specs descrevem
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Versão
+      description: Versão, tag ou commit em que o problema aparece
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Como reproduzir
+      description: Passos, comando ou entrada mínima
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: O que você esperava
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: O que aconteceu
+      description: Mensagem de erro, saída ou captura de tela
+    validations:
+      required: true

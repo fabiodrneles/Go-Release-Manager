@@ -28,6 +28,8 @@ func (i Increment) String() string {
 
 var commitRegex = regexp.MustCompile(`^(\w+)(?:\(([^)]+)\))?(!?): (.*)$`)
 
+var footerRegex = regexp.MustCompile(`^([\w-]+): |^(BREAKING CHANGE): |^(BREAKING-CHANGE): `)
+
 func parseCommit(rawCommit string) (header string, body string, footers string) {
 	// (Esta função permanece 100% intacta)
 	commit := strings.TrimSpace(rawCommit)
@@ -44,7 +46,7 @@ func parseCommit(rawCommit string) (header string, body string, footers string) 
 	footerStartIndex := len(paragraphs)
 	for i := len(paragraphs) - 1; i >= 0; i-- {
 		p := paragraphs[i]
-		isFooter, _ := regexp.MatchString(`^([\w-]+): |^(BREAKING CHANGE): |^(BREAKING-CHANGE): `, p)
+		isFooter := footerRegex.MatchString(p)
 		if isFooter {
 			footerStartIndex = i
 		} else {
