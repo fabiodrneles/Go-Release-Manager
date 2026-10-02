@@ -15,7 +15,6 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	color.NoColor = false
 	// --- 1. Definir os estilos de cor ---
 	// Cor para o Título ASCII (Ciano, Negrito)
 	cTitle := color.New(color.FgCyan, color.Bold)

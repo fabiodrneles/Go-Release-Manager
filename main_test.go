@@ -245,3 +245,23 @@ func TestErrorEndsWithNewline(t *testing.T) {
 		t.Errorf("código %d, saída %q", code, out)
 	}
 }
+
+// 002 FR-6: no color codes when the output is not a terminal.
+func TestNoColorWhenPiped(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
+	cmd := exec.Command(binary, "create", "-d")
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "GITHUB_TOKEN=test-token")
+	for i, e := range cmd.Env {
+		if strings.HasPrefix(e, "NO_COLOR=") {
+			cmd.Env[i] = "X_NO_COLOR=unset"
+		}
+	}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	if strings.Contains(string(out), "\x1b[") {
+		t.Errorf("saída com códigos de cor fora de um terminal:\n%q", out)
+	}
+}
