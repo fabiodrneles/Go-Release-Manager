@@ -26,4 +26,4 @@ Não há CI de PR (A1); pré-releases saem como releases normais (A2); a `main` 
 
 ## Decisões
 
-- D6 respondidas pelo dono em 2026-10-02 conforme as recomendações de [ANALYSIS.md §7](../ANALYSIS.md#7-decisões-respondidas-pelo-dono-em-2026-10-02).
+- D6 respondida pelo dono em 2026-10-02 conforme as recomendações de [ANALYSIS.md §7](../ANALYSIS.md#7-decisões-respondidas-pelo-dono-em-2026-10-02).
