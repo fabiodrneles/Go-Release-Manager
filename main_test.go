@@ -170,3 +170,23 @@ func TestVersionFlag(t *testing.T) {
 		t.Errorf("build local: --version = %q, quero %q", out, "dev\n")
 	}
 }
+
+// 002 AC-2
+func TestDryRunWithoutCredentials(t *testing.T) {
+	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(binary, "create", "-d")
+	cmd.Dir = dir
+	// Only git on PATH (no gh) and no GITHUB_TOKEN.
+	cmd.Env = []string{"PATH=" + filepath.Dir(gitPath), "HOME=" + t.TempDir(), "NO_COLOR=1"}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("create -d sem credenciais falhou: %v\n%s", err, out)
+	}
+	if !strings.Contains(string(out), "A nova tag a ser criada seria: v1.0.1") {
+		t.Errorf("versão proposta ausente:\n%s", out)
+	}
+}
