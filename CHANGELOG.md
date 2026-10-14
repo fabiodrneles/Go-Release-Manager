@@ -4,6 +4,12 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-14
+
+### Adicionado
+
+- the CLI and the Action speak English (#58)
+
 ## [1.1.1] - 2026-10-14
 
 ### Corrigido
