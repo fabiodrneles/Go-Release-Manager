@@ -6,9 +6,13 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [1.2.0] - 2026-10-14
 
-### Adicionado
+### Modificado
 
-- the CLI and the Action speak English (#58)
+- A ferramenta fala inglês. A ajuda, os logs, os erros, o resumo do `--dry-run` e as descrições da Action saem em inglês (`Latest tag`, `Commits analyzed`, `Tag that would be created`, `Error: ...`), e a ajuda não mistura mais os dois idiomas. As flags, os códigos de saída, o stdout do `next` e os campos do JSON não mudam: scripts e workflows continuam funcionando (#58).
+
+### Documentação
+
+- O README continua em português e em inglês, como guia completo. A nova seção "Entendendo a saída" ("Reading the output") explica cada linha que a ferramenta imprime. Os prints mostram a saída em inglês (#58).
 
 ## [1.1.1] - 2026-10-14
 
