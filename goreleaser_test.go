@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -23,6 +24,34 @@ func TestGoreleaserMarksPrereleases(t *testing.T) {
 	}
 	if cfg.Release.Prerelease != "auto" {
 		t.Errorf("release.prerelease = %q, quero \"auto\"", cfg.Release.Prerelease)
+	}
+}
+
+// 003 AC-5: the release binary prints the version as the tag spells it, with the
+// short commit (#52).
+func TestGoreleaserEmbedsTagVersion(t *testing.T) {
+	data, err := os.ReadFile(".goreleaser.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cfg struct {
+		Builds []struct {
+			Ldflags []string `yaml:"ldflags"`
+		} `yaml:"builds"`
+	}
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Builds) == 0 {
+		t.Fatal("nenhum build no .goreleaser.yml")
+	}
+	for _, b := range cfg.Builds {
+		flags := strings.Join(b.Ldflags, " ")
+		for _, want := range []string{"-X main.version=v{{.Version}}", "-X main.commit={{.ShortCommit}}"} {
+			if !strings.Contains(flags, want) {
+				t.Errorf("ldflags %q sem %q", flags, want)
+			}
+		}
 	}
 }
 
