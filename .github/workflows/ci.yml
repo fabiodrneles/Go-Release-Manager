@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# Só o pull_request cancela a rodada anterior: o CI da main e o da release (workflow_call)
+# ficam em grupos próprios e nunca são cancelados.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   ci:

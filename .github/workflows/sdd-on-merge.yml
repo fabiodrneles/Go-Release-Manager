@@ -1,0 +1,46 @@
+name: sdd-kit on merge
+
+# Quando um PR de ticket é mergeado, atualiza o checkpoint do épico aberto: feito
+# é o PR, próximo é o próximo ticket aberto (spec 015 FR-2 do sdd-kit). Sem LLM.
+# Só PRs do próprio repositório; faz checkout só da branch base, nunca do código do PR.
+# Desligue com a variável de repositório SDD_ENGINE=off.
+on:
+  pull_request:
+    types: [closed]
+  # Disparado pelo sdd-auto-merge depois de um merge feito pelo GITHUB_TOKEN, que
+  # não gera o evento acima.
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Número do PR mesclado
+        required: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: sdd-on-merge
+  cancel-in-progress: false
+
+jobs:
+  checkpoint:
+    name: Atualizar o checkpoint do épico
+    if: >-
+      vars.SDD_ENGINE != 'off' && (github.event_name == 'workflow_dispatch' || (
+      github.event.pull_request.merged &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !startsWith(github.event.pull_request.head.ref, 'chore/release-v')))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.ref || github.ref }}
+          persist-credentials: false
+      - name: Atualizar o checkpoint
+        env:
+          GH_TOKEN: ${{ secrets.SDD_ENGINE_TOKEN || github.token }}
+          SDD_ENGINE: ${{ vars.SDD_ENGINE }}
+          PR: ${{ inputs.pr || github.event.pull_request.number }}
+        run: sh scripts/sdd-on-merge.sh --repo "$GITHUB_REPOSITORY" --pr "$PR"

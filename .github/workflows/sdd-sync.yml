@@ -3,6 +3,10 @@ name: sdd-kit sync
 # Abre (ou atualiza) um PR com a última versão dos arquivos do sdd-kit
 # (spec 005 do sdd-kit). Requer em Settings → Actions → General:
 # "Allow GitHub Actions to create and approve pull requests".
+#
+# O GITHUB_TOKEN nunca tem a permissão `workflows`: sem o segredo SDD_SYNC_TOKEN
+# (ou SDD_ENGINE_TOKEN), com escrita em Contents, Pull requests e Workflows, os
+# arquivos de .github/workflows/ ficam fora do PR e são listados na descrição.
 on:
   schedule:
     - cron: "17 6 * * 1" # segundas, 06:17 UTC
@@ -16,13 +20,19 @@ jobs:
   sync:
     name: Sincronizar com o sdd-kit
     runs-on: ubuntu-latest
+    env:
+      SYNC_TOKEN: ${{ secrets.SDD_SYNC_TOKEN || secrets.SDD_ENGINE_TOKEN || github.token }}
+      SDD_SYNC_SKIP_WORKFLOWS: ${{ (secrets.SDD_SYNC_TOKEN != '' || secrets.SDD_ENGINE_TOKEN != '') && '0' || '1' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          token: ${{ env.SYNC_TOKEN }}
       - name: Atualizar arquivos gerenciados
         run: sh scripts/sdd-sync.sh --summary "$RUNNER_TEMP/sdd-sync.md"
       - name: Abrir ou atualizar o PR
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ env.SYNC_TOKEN }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           if [ -z "$(git status --porcelain)" ]; then
             echo "Nada a sincronizar."
@@ -39,6 +49,23 @@ jobs:
           git push --force origin "$branch"
           if [ "$(gh pr view "$branch" --json state -q .state 2>/dev/null)" = "OPEN" ]; then
             gh pr edit "$branch" --title "$title" --body-file "$RUNNER_TEMP/sdd-sync.md"
+            cat "$RUNNER_TEMP/sdd-sync.md" >> "$GITHUB_STEP_SUMMARY"
+          elif gh pr create --head "$branch" --title "$title" --body-file "$RUNNER_TEMP/sdd-sync.md" 2> "$RUNNER_TEMP/pr-create.err"; then
+            cat "$RUNNER_TEMP/sdd-sync.md" >> "$GITHUB_STEP_SUMMARY"
+          elif grep -q "not permitted to create or approve pull requests" "$RUNNER_TEMP/pr-create.err"; then
+            # A branch com a sincronização já foi enviada: só falta abrir o PR.
+            {
+              echo "### Sincronização enviada, mas o PR não foi aberto"
+              echo
+              echo "O GitHub Actions não pode criar PRs neste repositório. A branch \`$branch\` está pronta:"
+              echo
+              echo "- abra o PR: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/compare/$DEFAULT_BRANCH...$branch?expand=1"
+              echo "- para os próximos PRs saírem sozinhos, ative *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*."
+              echo
+              cat "$RUNNER_TEMP/sdd-sync.md"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Branch $branch enviada, mas o GitHub Actions não pode criar PRs. Veja o resumo do job para o link e a configuração."
           else
-            gh pr create --head "$branch" --title "$title" --body-file "$RUNNER_TEMP/sdd-sync.md"
+            cat "$RUNNER_TEMP/pr-create.err" >&2
+            exit 1
           fi

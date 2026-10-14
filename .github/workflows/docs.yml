@@ -19,10 +19,21 @@ jobs:
         run: npx --yes markdownlint-cli2@0.23.3
       - name: Rastreabilidade (sdd-check)
         run: sh scripts/sdd-check.sh --strict
+      # Os blocos ```bash do README marcados com <!-- doc-commands --> rodam aqui.
+      - name: Comandos da documentação
+        run: sh scripts/doc-commands.sh
       - name: Links
         uses: lycheeverse/lychee-action@v2
         with:
           args: --config lychee.toml --no-progress './**/*.md'
           fail: true
+          format: json
+          output: lychee/out.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # O log do job nem sempre é legível (ex.: agentes atrás de proxy); as
+      # anotações aparecem no check e na API.
+      - name: Links quebrados como anotações
+        if: failure()
+        run: >-
+          jq -r '((.error_map // {}) + (.timeout_map // {})) | to_entries[] | .key as $f | .value[] | "::error file=\($f),line=\(.span.line // 1)::link quebrado: \(.url) (\(.status.text // .status))"' lychee/out.json

@@ -1,0 +1,35 @@
+name: sdd-kit update PRs
+
+# Quando a main muda, traz a main para os PRs abertos que estão atrás dela e
+# avisa uma vez os que têm conflito (spec 015 FR-6 do sdd-kit). Sem LLM.
+# Desligue com a variável de repositório SDD_ENGINE=off.
+# Atenção: push com o GITHUB_TOKEN não dispara o CI do PR; para que dispare,
+# crie o segredo SDD_ENGINE_TOKEN (veja o cabeçalho de scripts/sdd-update-prs.sh).
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sdd-update-prs
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Atualizar PRs abertos
+    if: vars.SDD_ENGINE != 'off'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Atualizar PRs atrás da main
+        env:
+          GH_TOKEN: ${{ secrets.SDD_ENGINE_TOKEN || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SDD_ENGINE: ${{ vars.SDD_ENGINE }}
+          SDD_ENGINE_TOKEN_SET: ${{ secrets.SDD_ENGINE_TOKEN != '' && '1' || '' }}
+          SDD_CI_WORKFLOW: ${{ vars.SDD_CI_WORKFLOW }}
+        run: sh scripts/sdd-update-prs.sh

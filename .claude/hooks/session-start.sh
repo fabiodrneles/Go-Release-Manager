@@ -9,8 +9,19 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(pwd)}"
 
+# Spec 014: o ponto de retomada, a branch, os PRs e as issues do épico aberto entram no contexto da sessão.
+sh scripts/sdd-resume.sh 2>/dev/null || true
+
 if [ -f go.mod ]; then
   go mod download
+  # A toolchain que o GOTOOLCHAIN baixa para a versão do go.mod não traz o
+  # covdata, e `go test -coverprofile ./...` falha num pacote sem testes
+  # ("no such tool covdata"). Compila o que falta na própria toolchain.
+  tooldir="$(go env GOTOOLDIR)"
+  if [ ! -x "$tooldir/covdata" ]; then
+    chmod u+w "$tooldir"
+    go build -o "$tooldir/covdata" cmd/covdata
+  fi
 fi
 
 # golangci-lint na mesma versão do CI (lida do Makefile).
