@@ -4,10 +4,15 @@
 set -eu
 want=$(sed -n 's/^go \([0-9]*\.[0-9]*\).*/\1/p' go.mod)
 bad=0
-if grep -n "go-version:" .github/workflows/*.yml; then
-	echo "use go-version-file: go.mod nos workflows" >&2
-	bad=1
-fi
+# The sdd-kit engine (sdd-*.yml) is synced from the kit and only installs tools with
+# the stable Go; it never builds this module, so it is not held to go.mod.
+for wf in .github/workflows/*.yml; do
+	case "$wf" in */sdd-*.yml) continue ;; esac
+	if grep -Hn "go-version:" "$wf"; then
+		echo "use go-version-file: go.mod nos workflows" >&2
+		bad=1
+	fi
+done
 if grep -n "FROM golang:" Dockerfile | grep -v "golang:$want" ; then
 	echo "Dockerfile deve usar golang:$want (go.mod)" >&2
 	bad=1

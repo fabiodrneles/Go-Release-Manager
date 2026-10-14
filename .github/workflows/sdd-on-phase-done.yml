@@ -1,0 +1,53 @@
+name: sdd-kit phase done
+
+# Quando o último ticket aberto do épico é fechado, abre o PR de fechamento da
+# versão com scripts/sdd-release.sh (spec 015 FR-4 do sdd-kit). Sem LLM.
+# Desligue com a variável de repositório SDD_ENGINE=off.
+# Atenção: PRs abertos com o GITHUB_TOKEN não disparam o CI; para que dispare, crie
+# o segredo SDD_ENGINE_TOKEN (PAT com contents e pull requests).
+on:
+  issues:
+    types: [closed]
+  # Disparado pelo sdd-auto-merge: a issue fechada por um merge do GITHUB_TOKEN não
+  # gera o evento acima.
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Número da issue fechada
+        required: true
+
+permissions:
+  actions: write
+  contents: write
+  issues: write # comentário do sdd-report.sh phase no épico (spec 017 FR-5)
+  pull-requests: write
+
+concurrency:
+  group: sdd-on-phase-done
+  cancel-in-progress: false
+
+jobs:
+  release-pr:
+    name: Abrir o PR de fechamento
+    if: vars.SDD_ENGINE != 'off'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - name: Instalar o go-release-manager
+        run: go install github.com/fabiodrneles/go-release-manager@v1.1.0
+      - name: Abrir o PR de fechamento
+        env:
+          GH_TOKEN: ${{ secrets.SDD_ENGINE_TOKEN || github.token }}
+          SDD_ENGINE: ${{ vars.SDD_ENGINE }}
+          ISSUE: ${{ inputs.issue || github.event.issue.number }}
+          SDD_ENGINE_TOKEN_SET: ${{ secrets.SDD_ENGINE_TOKEN != '' && '1' || '' }}
+          SDD_CI_WORKFLOW: ${{ vars.SDD_CI_WORKFLOW }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          sh scripts/sdd-on-phase-done.sh --repo "$GITHUB_REPOSITORY" "$ISSUE"

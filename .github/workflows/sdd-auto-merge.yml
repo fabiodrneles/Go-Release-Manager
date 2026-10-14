@@ -1,0 +1,42 @@
+name: sdd-kit auto merge
+
+# Merge automático: ligue com `sh scripts/sdd-auto-merge.sh on` (grava a variável
+# SDD_AUTO_MERGE do repositório) e desligue com `off`. Ligado, o PR cujo CI acabou de
+# ficar verde é mesclado sozinho (sem LLM), e os workflows do motor que vêm depois
+# do merge são disparados em seguida. Roda com os scripts da branch padrão e nunca
+# executa código do PR.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  merge:
+    name: Mesclar o PR com o CI verde
+    runs-on: ubuntu-latest
+    if: >-
+      vars.SDD_ENGINE != 'off' &&
+      vars.SDD_AUTO_MERGE == 'on' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.head_branch != github.event.repository.default_branch
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Mesclar
+        env:
+          GH_TOKEN: ${{ secrets.SDD_ENGINE_TOKEN || github.token }}
+          SDD_ENGINE_TOKEN_SET: ${{ secrets.SDD_ENGINE_TOKEN != '' && '1' || '' }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          SDD_AUTO_MERGE: ${{ vars.SDD_AUTO_MERGE }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: sh scripts/sdd-auto-merge.sh --repo "$GITHUB_REPOSITORY" merge --sha "$SHA" --branch "$BRANCH"

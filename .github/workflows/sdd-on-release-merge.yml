@@ -1,0 +1,56 @@
+name: sdd-kit on release merge
+
+# Quando o PR de fechamento (chore/release-vX.Y.Z) é mergeado, dispara a release
+# da versão uma única vez, com o `sdd-release.sh --tag` (spec 015 FR-5 do sdd-kit).
+# Sem LLM. Só PRs do próprio repositório; o checkout é da branch padrão (nunca do
+# código do PR). Desligue com a variável de repositório SDD_ENGINE=off.
+# O workflow_dispatch do release-tag.yml, disparado com o GITHUB_TOKEN, RODA: é a
+# exceção documentada do GitHub à regra de não recursão (push e eventos de PR, não).
+# Sem release-tag.yml, o sdd-release.sh cria a tag por push e esta permissão
+# precisa subir para contents: write.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  # Disparado pelo sdd-auto-merge depois de mesclar o PR de fechamento.
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Número do PR de fechamento mesclado
+        required: true
+
+permissions:
+  actions: write
+  checks: read
+  contents: read
+  issues: write
+  statuses: read
+
+concurrency:
+  group: sdd-on-release-merge
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Disparar a release
+    if: >-
+      vars.SDD_ENGINE != 'off' && (github.event_name == 'workflow_dispatch' || (
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'chore/release-v')))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - name: Disparar a release
+        env:
+          GH_TOKEN: ${{ secrets.SDD_ENGINE_TOKEN || github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SDD_ENGINE: ${{ vars.SDD_ENGINE }}
+          GRM_VERSION: v1.1.0
+          PR_NUMBER: ${{ inputs.pr || github.event.pull_request.number }}
+        run: sh scripts/sdd-on-release-merge.sh "$PR_NUMBER"
