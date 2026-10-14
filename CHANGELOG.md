@@ -4,6 +4,22 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-14
+
+### Corrigido
+
+- O binário baixado da release imprime no `--version` a versão no formato da tag, com o commit abreviado (`v1.1.1 (410e246)`). Antes, imprimia `1.1.0 (hash inteiro)`, diferente do `go install` e do `next` (#53).
+
+### Documentação
+
+- README reescrito em português e novo README em inglês (`README.en.md`), com prints da saída real, diagrama do cálculo da versão, instalação passo a passo por sistema com conferência do checksum, todos os inputs e outputs da Action, a saída JSON campo a campo, dicas e problemas comuns (#55).
+- Os blocos `bash` dos dois READMEs rodam no CI (#55).
+
+### Interno
+
+- Testes de unidade para os pacotes internos e os comandos: a cobertura do código todo passa de 7,9% para 97,1% (#50).
+- Arquivos do sdd-kit sincronizados para a v1.24.0. A sincronização semanal, que falhava, volta a funcionar, e o `make ci` passa a exigir 80% de cobertura (#51).
+
 ## [1.1.0] - 2026-10-02
 
 ### Adicionado
