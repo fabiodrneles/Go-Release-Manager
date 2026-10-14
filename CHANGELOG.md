@@ -4,6 +4,12 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-14
+
+### Corrigido
+
+- release binary prints the version as the tag spells it (#53)
+
 ## [1.1.0] - 2026-10-02
 
 ### Adicionado
