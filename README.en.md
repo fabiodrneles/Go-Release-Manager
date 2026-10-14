@@ -20,6 +20,7 @@ Automatic semantic versioning from your commits, **without the complexity**.
 - [Installation](#installation)
 - [Step by step: your first version](#step-by-step-your-first-version)
 - [Commands and flags](#commands-and-flags)
+- [Reading the output](#reading-the-output)
 - [How the version is computed](#how-the-version-is-computed)
 - [Pre-releases](#pre-releases)
 - [Configuration (optional)](#configuration-optional)
@@ -159,6 +160,28 @@ To follow a version set in your plan, or to tag a commit other than `HEAD`:
 go-release-manager create --release-as v2.0.0
 go-release-manager create --ref 1a2b3c4
 ```
+
+## Reading the output
+
+What each line the tool prints means, and what to do about it.
+
+| The tool prints | What it means |
+|---|---|
+| `No .go-releaserc.yml found. Using the default rules (feat/fix).` | No configuration file; the default rules apply (`feat` → minor, `fix` → patch). See [Configuration](#configuration-optional). |
+| `Found .go-releaserc.yml. Loading custom rules.` | `.go-releaserc.yml` was read and its rules apply. |
+| `Latest stable version: v1.2.0` | The latest stable version, used as the base. `(none)` when there is no tag yet. |
+| `Analyzing 3 commit(s) since tag v1.2.0...` | How many commits since the base were counted. |
+| `Skipping non-conventional commit: [...]` | A commit outside the convention (such as a merge) was skipped. Just a note. |
+| `Pre-release channel: rc` | The version comes out as a pre-release on this channel. |
+| `Analysis done. Highest increment: Minor` | The highest increment among the commits: `None`, `Patch`, `Minor` or `Major`. |
+| `Increment: Minor. Next version: v1.3.0` | The computed next version. |
+| `No relevant change found (...). No release will be created.` | No `feat`, `fix` or breaking change: no new version, and the command exits without error. |
+| `--- DRY RUN ---` … `--- END OF DRY RUN ---` | The simulation summary: nothing was created. `Tag that would be created` is the tag `create` would make. |
+| `Creating git tag 'v1.3.0'...` and `Pushing tag 'v1.3.0' to the remote...` | Without `--dry-run`: the tag is being created and pushed to `origin`. |
+| `✅ Tag v1.3.0 created and pushed.` | Done: the tag is on GitHub, and the repository's release workflow starts. |
+| `Error: ...` | Something stopped the command, and it exits with code 1. The usual causes are in [Troubleshooting](#troubleshooting). |
+
+Diagnostic lines go to stderr. Stdout holds only the result of `next` (the version) and the JSON of `--output json`, so scripts can read stdout without filtering.
 
 ## How the version is computed
 

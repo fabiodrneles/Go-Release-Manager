@@ -11,7 +11,7 @@ Versionamento semântico automático a partir dos seus commits, **sem a complexi
 
 O `go-release-manager` é uma CLI leve, escrita em Go, que lê os commits desde a última versão estável, aplica o [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/) e calcula (ou cria) a próxima tag [SemVer](https://semver.org/lang/pt-BR/). Funciona sozinha, como GitHub Action ou como o "cérebro" de um pipeline com o [GoReleaser](https://goreleaser.com/). É ela que calcula as versões do [sdd-kit](https://github.com/fabiodrneles/sdd-kit).
 
-> A ferramenta fala inglês: a ajuda, as mensagens e os erros saem em inglês. Os comandos, as opções e o JSON são os mesmos descritos aqui.
+> A ferramenta fala inglês: a ajuda, as mensagens e os erros saem em inglês. Este guia explica tudo em português, e a seção [Entendendo a saída](#entendendo-a-saída) traduz cada linha que ela imprime.
 
 ![go-release-manager create --dry-run: a última tag é v1.2.0, há três commits novos e a próxima versão é v1.3.0](docs/images/dry-run.png)
 
@@ -22,6 +22,7 @@ O `go-release-manager` é uma CLI leve, escrita em Go, que lê os commits desde 
 - [Instalação](#instalação)
 - [Passo a passo: a primeira versão](#passo-a-passo-a-primeira-versão)
 - [Comandos e opções](#comandos-e-opções)
+- [Entendendo a saída](#entendendo-a-saída)
 - [Como a versão é calculada](#como-a-versão-é-calculada)
 - [Pré-releases](#pré-releases)
 - [Configuração (opcional)](#configuração-opcional)
@@ -161,6 +162,28 @@ Para seguir uma versão definida no planejamento, ou criar a tag num commit que 
 go-release-manager create --release-as v2.0.0
 go-release-manager create --ref 1a2b3c4
 ```
+
+## Entendendo a saída
+
+A ferramenta escreve em inglês. A tabela traduz cada linha que ela imprime e diz o que fazer com ela.
+
+| A ferramenta imprime | O que quer dizer |
+|---|---|
+| `No .go-releaserc.yml found. Using the default rules (feat/fix).` | Não há arquivo de configuração; valem as regras padrão (`feat` → minor, `fix` → patch). Veja [Configuração](#configuração-opcional). |
+| `Found .go-releaserc.yml. Loading custom rules.` | O `.go-releaserc.yml` foi lido e as regras dele valem. |
+| `Latest stable version: v1.2.0` | A última versão estável, que serve de base. `(none)` quando ainda não há nenhuma tag. |
+| `Analyzing 3 commit(s) since tag v1.2.0...` | Quantos commits entraram na conta, desde a base. |
+| `Skipping non-conventional commit: [...]` | Um commit fora do padrão (como um merge) foi ignorado. É só um aviso. |
+| `Pre-release channel: rc` | A versão sai como pré-release desse canal. |
+| `Analysis done. Highest increment: Minor` | O maior incremento entre os commits: `None` (nenhum), `Patch`, `Minor` ou `Major`. |
+| `Increment: Minor. Next version: v1.3.0` | A próxima versão calculada. |
+| `No relevant change found (...). No release will be created.` | Não há `feat`, `fix` nem mudança incompatível: não sai versão nova, e o comando termina sem erro. |
+| `--- DRY RUN ---` … `--- END OF DRY RUN ---` | O resumo da simulação: nada foi criado. `Tag that would be created` é a tag que o `create` criaria. |
+| `Creating git tag 'v1.3.0'...` e `Pushing tag 'v1.3.0' to the remote...` | Sem `--dry-run`: a tag está sendo criada e enviada para o `origin`. |
+| `✅ Tag v1.3.0 created and pushed.` | Pronto: a tag está no GitHub, e o workflow de release do repositório começa. |
+| `Error: ...` | Algo impediu o comando, e ele sai com código 1. As causas mais comuns estão em [Problemas comuns](#problemas-comuns). |
+
+As linhas de diagnóstico vão para o stderr. No stdout ficam só o resultado do `next` (a versão) e o JSON do `--output json`, então scripts podem ler o stdout sem filtrar nada.
 
 ## Como a versão é calculada
 
