@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="330" viewBox="0 0 980 330" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="980" height="330" rx="14" fill="#0d1117" stroke="#30363d"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker></defs>
+<text x="28" y="40" fill="#e6edf3" font-size="20" font-weight="600">Como a próxima versão é calculada</text>
+<rect x="28" y="135" width="150" height="70" rx="10" fill="#161b22" stroke="#d29922" stroke-width="1.5"/>
+<text x="103.0" y="166.0" fill="#e6edf3" font-size="17" font-weight="600" text-anchor="middle" font-family="DejaVu Sans Mono, Menlo, monospace">v1.2.0</text>
+<text x="103.0" y="188.0" fill="#8b949e" font-size="13" text-anchor="middle">última tag estável</text>
+<text x="238" y="78" fill="#8b949e" font-size="13">commits desde a tag</text>
+<text x="560" y="78" fill="#8b949e" font-size="13">incremento de cada commit</text>
+<line x1="178" y1="170" x2="234" y2="117" stroke="#30363d" stroke-width="1.5"/>
+<rect x="236" y="92" width="300" height="50" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="252" y="123" fill="#e6edf3" font-size="14" font-family="DejaVu Sans Mono, Menlo, monospace">docs: usage examples</text>
+<line x1="536" y1="117" x2="556" y2="117" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="560" y="100" width="92" height="34" rx="17" fill="#8b949e" fill-opacity=".15" stroke="#8b949e"/>
+<text x="606" y="122" fill="#8b949e" font-size="14" font-weight="600" text-anchor="middle">nenhum</text>
+<line x1="652" y1="117" x2="694" y2="170" stroke="#30363d" stroke-width="1.5"/>
+<line x1="178" y1="170" x2="234" y2="183" stroke="#30363d" stroke-width="1.5"/>
+<rect x="236" y="158" width="300" height="50" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="252" y="189" fill="#e6edf3" font-size="14" font-family="DejaVu Sans Mono, Menlo, monospace">feat(cli): add --timeout flag</text>
+<line x1="536" y1="183" x2="556" y2="183" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="560" y="166" width="92" height="34" rx="17" fill="#3fb950" fill-opacity=".15" stroke="#3fb950"/>
+<text x="606" y="188" fill="#3fb950" font-size="14" font-weight="600" text-anchor="middle">minor</text>
+<line x1="652" y1="183" x2="694" y2="170" stroke="#30363d" stroke-width="1.5"/>
+<line x1="178" y1="170" x2="234" y2="249" stroke="#30363d" stroke-width="1.5"/>
+<rect x="236" y="224" width="300" height="50" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="252" y="255" fill="#e6edf3" font-size="14" font-family="DejaVu Sans Mono, Menlo, monospace">fix(parser): handle empty input</text>
+<line x1="536" y1="249" x2="556" y2="249" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="560" y="232" width="92" height="34" rx="17" fill="#58a6ff" fill-opacity=".15" stroke="#58a6ff"/>
+<text x="606" y="254" fill="#58a6ff" font-size="14" font-weight="600" text-anchor="middle">patch</text>
+<line x1="652" y1="249" x2="694" y2="170" stroke="#30363d" stroke-width="1.5"/>
+<line x1="694" y1="170" x2="790" y2="170" stroke="#8b949e" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="738" y="194" fill="#8b949e" font-size="12" text-anchor="middle">o maior vence</text>
+<rect x="794" y="135" width="160" height="70" rx="10" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/>
+<text x="874.0" y="166.0" fill="#e6edf3" font-size="17" font-weight="600" text-anchor="middle" font-family="DejaVu Sans Mono, Menlo, monospace">v1.3.0</text>
+<text x="874.0" y="188.0" fill="#8b949e" font-size="13" text-anchor="middle">próxima tag (minor)</text>
+<text x="28" y="306" fill="#8b949e" font-size="13">fix → patch · feat → minor · feat! / BREAKING CHANGE → major (0.x: minor) · docs, chore, test… → nenhum</text>
+</svg>
