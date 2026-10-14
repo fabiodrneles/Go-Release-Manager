@@ -11,6 +11,8 @@ Versionamento semântico automático a partir dos seus commits, **sem a complexi
 
 O `go-release-manager` é uma CLI leve, escrita em Go, que lê os commits desde a última versão estável, aplica o [Conventional Commits](https://www.conventionalcommits.org/pt-br/v1.0.0/) e calcula (ou cria) a próxima tag [SemVer](https://semver.org/lang/pt-BR/). Funciona sozinha, como GitHub Action ou como o "cérebro" de um pipeline com o [GoReleaser](https://goreleaser.com/). É ela que calcula as versões do [sdd-kit](https://github.com/fabiodrneles/sdd-kit).
 
+> A ferramenta fala inglês: a ajuda, as mensagens e os erros saem em inglês. Os comandos, as opções e o JSON são os mesmos descritos aqui.
+
 ![go-release-manager create --dry-run: a última tag é v1.2.0, há três commits novos e a próxima versão é v1.3.0](docs/images/dry-run.png)
 
 ## Sumário
@@ -58,7 +60,7 @@ Cada [release](https://github.com/fabiodrneles/go-release-manager/releases) traz
 **Linux e macOS** (troque `Linux_x86_64` por `Linux_arm64`, `Darwin_x86_64` ou `Darwin_arm64` conforme o seu sistema):
 
 ```text
-VERSION=1.1.1
+VERSION=1.2.0
 BASE=https://github.com/fabiodrneles/go-release-manager/releases/download/v$VERSION
 curl -fsSLO "$BASE/go-release-manager_${VERSION}_Linux_x86_64.tar.gz"
 curl -fsSLO "$BASE/checksums.txt"
@@ -70,7 +72,7 @@ sudo install go-release-manager /usr/local/bin/
 **Windows** (PowerShell):
 
 ```text
-$Version = "1.1.1"
+$Version = "1.2.0"
 $Base = "https://github.com/fabiodrneles/go-release-manager/releases/download/v$Version"
 Invoke-WebRequest "$Base/go-release-manager_${Version}_Windows_x86_64.zip" -OutFile grm.zip
 Invoke-WebRequest "$Base/checksums.txt" -OutFile checksums.txt
@@ -244,7 +246,7 @@ jobs:
         with:
           fetch-depth: 0          # obrigatório: sem o histórico, as tags não aparecem
       - id: version
-        uses: fabiodrneles/go-release-manager@v1.1.1
+        uses: fabiodrneles/go-release-manager@v1.2.0
         with:
           create: true            # sem isto, só calcula
       - if: steps.version.outputs.created == 'true'
@@ -253,7 +255,7 @@ jobs:
 
 | Input | Padrão | O que faz |
 |---|---|---|
-| `version` | `latest` | Versão do go-release-manager a instalar (`v1.1.1`, `latest` ou `source`). |
+| `version` | `latest` | Versão do go-release-manager a instalar (`v1.2.0`, `latest` ou `source`). |
 | `create` | `false` | `true` cria e empurra a tag. |
 | `pre-release` | | Canal de pré-release (`beta`, `rc`). |
 | `release-as` | | Força esta versão (`vX.Y.Z`). |
@@ -305,13 +307,13 @@ No [sdd-kit](https://github.com/fabiodrneles/sdd-kit), o go-release-manager deci
 
 | Sintoma | Causa e solução |
 |---|---|
-| "Nenhuma mudança relevante encontrada" | Não há `feat`, `fix` nem mudança incompatível desde a última tag estável. Confira os tipos com `git log --oneline <tag>..HEAD`. |
-| A base é `(nenhuma)` ou a versão volta para `v0.x` | O clone não tem as tags: rode `git fetch --tags` ou use `fetch-depth: 0` no `actions/checkout`. |
-| "token de acesso não fornecido" | Só o `create` sem `--dry-run` pede credencial: defina `GITHUB_TOKEN` ou rode `gh auth login`. |
-| "erro ao empurrar tag" | O git não conseguiu enviar para o `origin`: confira o remoto (`git remote -v`) e a permissão de escrita. No GitHub Actions, dê `permissions: contents: write` ao job. |
-| "a tag já existe" com `--release-as` | A versão forçada precisa ser nova e maior que a última estável. |
+| "No relevant change found" | Não há `feat`, `fix` nem mudança incompatível desde a última tag estável. Confira os tipos com `git log --oneline <tag>..HEAD`. |
+| A base é `(none)` ou a versão volta para `v0.x` | O clone não tem as tags: rode `git fetch --tags` ou use `fetch-depth: 0` no `actions/checkout`. |
+| "no access token" | Só o `create` sem `--dry-run` pede credencial: defina `GITHUB_TOKEN` ou rode `gh auth login`. |
+| "failed to push the tag" | O git não conseguiu enviar para o `origin`: confira o remoto (`git remote -v`) e a permissão de escrita. No GitHub Actions, dê `permissions: contents: write` ao job. |
+| "the tag already exists" com `--release-as` | A versão forçada precisa ser nova e maior que a última estável. |
 | A tag foi criada, mas a release não saiu | Uma tag criada com o `GITHUB_TOKEN` padrão não dispara workflows: veja o aviso na seção [GitHub Action](#github-action). |
-| "Commit não convencional, ignorando" no stderr | Aviso, não erro: commits fora do padrão (como merges) não contam para a versão. |
+| "Skipping non-conventional commit" no stderr | Aviso, não erro: commits fora do padrão (como merges) não contam para a versão. |
 
 ## Desenvolvimento
 

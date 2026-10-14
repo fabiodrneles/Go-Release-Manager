@@ -14,7 +14,7 @@ func runCommand(name string, args ...string) (string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("erro ao executar comando '%s %s': %s", name, strings.Join(args, " "), strings.TrimSpace(stderr.String()))
+		return "", fmt.Errorf("command '%s %s' failed: %s", name, strings.Join(args, " "), strings.TrimSpace(stderr.String()))
 	}
 	return strings.TrimSpace(stdout.String()), nil
 }
@@ -96,7 +96,7 @@ func GetCurrentRepo() (owner, repo string, err error) {
 
 	parts := strings.Split(remoteURL, "/")
 	if len(parts) < 2 {
-		return "", "", fmt.Errorf("URL remota inválida: %s", remoteURL)
+		return "", "", fmt.Errorf("invalid remote URL: %s", remoteURL)
 	}
 	return parts[len(parts)-2], parts[len(parts)-1], nil
 }

@@ -32,8 +32,8 @@ func TestParse(t *testing.T) {
 		t.Errorf("mescla sobre o padrão: %+v", c.ReleaseRules)
 	}
 	for data, want := range map[string]string{
-		"releaseRules: [":                                  "inválido",
-		"releaseRules:\n  - release: patch\n":              "sem \"type\"",
+		"releaseRules: [":                                  "invalid",
+		"releaseRules:\n  - release: patch\n":              "without \"type\"",
 		"releaseRules:\n  - type: feat\n    release: minr": "\"minr\"",
 	} {
 		if _, err := Parse([]byte(data)); err == nil || !strings.Contains(err.Error(), want) {

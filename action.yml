@@ -1,5 +1,5 @@
 name: go-release-manager
-description: Calcula (e opcionalmente cria) a próxima tag SemVer a partir de Conventional Commits.
+description: Computes (and optionally creates) the next SemVer tag from Conventional Commits.
 author: Fabio Dorneles
 branding:
   icon: tag
@@ -7,51 +7,51 @@ branding:
 
 inputs:
   version:
-    description: Versão do go-release-manager a instalar (ex. v1.1.0), "latest" ou "source" (compila o código da própria Action; requer Go).
+    description: go-release-manager version to install (e.g. v1.1.1), "latest" or "source" (builds the Action's own code; needs Go).
     default: latest
   create:
-    description: '"true" cria e empurra a tag; senão só calcula.'
+    description: '"true" creates and pushes the tag; otherwise it only computes.'
     default: "false"
   pre-release:
-    description: Canal de pré-release (ex. beta, rc).
+    description: Pre-release channel (e.g. beta, rc).
     default: ""
   release-as:
-    description: Força esta versão (vX.Y.Z) no lugar da calculada.
+    description: Forces this version (vX.Y.Z) instead of the computed one.
     default: ""
   ref:
-    description: Commit ou branch onde analisar e criar a tag (padrão HEAD).
+    description: Commit or branch to analyze and tag (default HEAD).
     default: ""
   working-directory:
-    description: Repositório git a analisar.
+    description: Git repository to analyze.
     default: "."
   token:
-    description: Token para baixar a release e, com create, empurrar a tag.
+    description: Token to download the release and, with create, push the tag.
     default: ${{ github.token }}
 
 outputs:
   next:
-    description: Próxima versão (vazio se não há release).
+    description: Next version (empty when there is no release).
     value: ${{ steps.run.outputs.next }}
   previous:
-    description: Última versão estável.
+    description: Latest stable version.
     value: ${{ steps.run.outputs.previous }}
   increment:
-    description: None, Patch, Minor ou Major.
+    description: None, Patch, Minor or Major.
     value: ${{ steps.run.outputs.increment }}
   created:
-    description: '"true" se a tag foi criada e empurrada.'
+    description: '"true" when the tag was created and pushed.'
     value: ${{ steps.run.outputs.created }}
   ref:
-    description: Commit (abreviado) onde a tag foi ou seria criada.
+    description: Commit (short) where the tag was or would be created.
     value: ${{ steps.run.outputs.ref }}
   forced:
-    description: '"true" se a versão veio de release-as.'
+    description: '"true" when the version came from release-as.'
     value: ${{ steps.run.outputs.forced }}
 
 runs:
   using: composite
   steps:
-    - name: Instala o go-release-manager
+    - name: Install go-release-manager
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
@@ -73,12 +73,12 @@ runs:
           Linux) os=Linux ext=tar.gz ;;
           macOS) os=Darwin ext=tar.gz ;;
           Windows) os=Windows ext=zip ;;
-          *) echo "sistema não suportado: $RUNNER_OS" >&2; exit 1 ;;
+          *) echo "unsupported OS: $RUNNER_OS" >&2; exit 1 ;;
         esac
         case "$RUNNER_ARCH" in
           X64) arch=x86_64 ;;
           ARM64) arch=arm64 ;;
-          *) echo "arquitetura não suportada: $RUNNER_ARCH" >&2; exit 1 ;;
+          *) echo "unsupported architecture: $RUNNER_ARCH" >&2; exit 1 ;;
         esac
         asset="go-release-manager_${VERSION#v}_${os}_${arch}.${ext}"
         gh release download "$VERSION" -R "$repo" -p "$asset" -p checksums.txt -D "$dir" --clobber
@@ -93,7 +93,7 @@ runs:
         fi
         echo "$dir" >> "$GITHUB_PATH"
 
-    - name: Calcula a próxima versão
+    - name: Compute the next version
       id: run
       shell: bash
       working-directory: ${{ inputs.working-directory }}

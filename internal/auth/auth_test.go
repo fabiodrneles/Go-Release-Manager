@@ -36,9 +36,9 @@ func TestGetTokenFromGh(t *testing.T) {
 
 func TestGetTokenErrors(t *testing.T) {
 	for body, want := range map[string]string{
-		"":                                 "não encontrado",
+		"":                                 "not found",
 		`echo "not logged in" >&2; exit 1`: "not logged in",
-		`exit 0`:                           "não retornou",
+		`exit 0`:                           "returned no token",
 	} {
 		fakeGh(t, body)
 		if _, err := GetToken(); err == nil || !strings.Contains(err.Error(), want) {

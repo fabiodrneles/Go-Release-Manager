@@ -26,7 +26,7 @@ O cálculo erra depois de uma pré-release (C1), uma configuração parcial desa
 - **AC-4** Dado um `.go-releaserc.yml` só com `docs: patch` e um commit `feat:` sobre `v1.0.0`, quando `create -d` roda, então a versão proposta é `v1.1.0`.
 - **AC-5** Dado `release: "minr"` no `.go-releaserc.yml`, quando `create -d` roda, então sai com código diferente de zero e cita o tipo e o valor inválidos.
 - **AC-6** Dada a tag `latest` sobre `v1.0.0` e um commit `fix:`, quando `create -d` roda, então a versão proposta é `v1.0.1`.
-- **AC-7** Dado um commit desde `v1.0.0`, quando `create -d` roda, então "Commits analisados" é 1.
+- **AC-7** Dado um commit desde `v1.0.0`, quando `create -d` roda, então "Commits analyzed" é 1.
 - **AC-8** Dado um repositório sem tags e um commit `feat:`, quando `create -d` roda, então a versão proposta é `v0.1.0`.
 
 ## Fora de escopo

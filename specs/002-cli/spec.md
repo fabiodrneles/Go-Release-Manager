@@ -16,6 +16,7 @@ A versão não é embutida no binário (A3), o README documenta uma flag que nã
 - **FR-3 (D4)** `next` MUST imprimir só a próxima versão (ou nada, sem incremento) e sair com 0.
 - **FR-4 (D4)** `create --output json` MUST imprimir um objeto com `previous`, `next`, `increment`, `commits` e `created`.
 - **FR-5** Mensagens de erro MUST terminar com quebra de linha e ir para stderr; a saída JSON MUST ir sozinha para stdout.
+- **FR-6** Toda mensagem da CLI (ajuda, logs, erros, resumo do `--dry-run`) e da Action MUST estar em inglês. A documentação para quem usa tem versão em português e em inglês.
 - **FR-6** Cores MUST ser desativadas quando a saída não é um terminal ou quando `NO_COLOR` está definida.
 
 ## Critérios de aceite
@@ -25,10 +26,12 @@ A versão não é embutida no binário (A3), o README documenta uma flag que nã
 - **AC-3** Dado `v1.0.0` e um commit `fix:`, quando `next` roda, então stdout é exatamente `v1.0.1\n`.
 - **AC-4** Dado o mesmo histórico, quando `create -d --output json` roda, então stdout é um JSON válido com `"next":"v1.0.1"` e `"created":false`.
 - **AC-5** Dados os READMEs (`README.md` e `README.en.md`), quando o CI roda, então cada comando dos blocos `bash` funciona.
+- **AC-6** Dado o código da CLI e o `action.yml`, quando o teste procura texto em português (letras acentuadas), então não encontra nenhum.
 
 ## Mudanças
 
 - MODIFIED AC-5: o README em inglês também tem os blocos `bash` verificados no CI (#54).
+- ADDED FR-6, AC-6: a CLI e a Action passam a falar inglês (#57).
 - MODIFIED FR-1: um build feito exatamente sobre uma tag limpa mostra a versão da tag, e não `dev`. A suposição anterior quebrou o `make ci` do workflow de release da `v1.0.0` (#38).
 
 ## Fora de escopo
