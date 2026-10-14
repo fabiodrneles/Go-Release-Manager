@@ -24,10 +24,11 @@ A versão não é embutida no binário (A3), o README documenta uma flag que nã
 - **AC-2** Dado um repositório com commits novos e nenhuma credencial, quando `create -d` roda, então sai com 0 e mostra a versão proposta.
 - **AC-3** Dado `v1.0.0` e um commit `fix:`, quando `next` roda, então stdout é exatamente `v1.0.1\n`.
 - **AC-4** Dado o mesmo histórico, quando `create -d --output json` roda, então stdout é um JSON válido com `"next":"v1.0.1"` e `"created":false`.
-- **AC-5** Dado o README, quando o CI roda, então cada comando dos blocos `bash` funciona.
+- **AC-5** Dados os READMEs (`README.md` e `README.en.md`), quando o CI roda, então cada comando dos blocos `bash` funciona.
 
 ## Mudanças
 
+- MODIFIED AC-5: o README em inglês também tem os blocos `bash` verificados no CI (#54).
 - MODIFIED FR-1: um build feito exatamente sobre uma tag limpa mostra a versão da tag, e não `dev`. A suposição anterior quebrou o `make ci` do workflow de release da `v1.0.0` (#38).
 
 ## Fora de escopo
