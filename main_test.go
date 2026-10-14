@@ -72,7 +72,7 @@ func run(t *testing.T, dir string, args ...string) (string, int) {
 	return string(out), code
 }
 
-var proposed = regexp.MustCompile(`A nova tag a ser criada seria: (\S+)`)
+var proposed = regexp.MustCompile(`Tag that would be created: (\S+)`)
 
 func nextVersion(t *testing.T, dir string, args ...string) string {
 	t.Helper()
@@ -150,8 +150,8 @@ func TestInvalidReleaseValue(t *testing.T) {
 func TestCommitCount(t *testing.T) {
 	dir := repo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b")
 	out, _ := run(t, dir, "create", "-d")
-	if !strings.Contains(out, "Commits analisados: 1\n") {
-		t.Errorf("esperava 'Commits analisados: 1':\n%s", out)
+	if !strings.Contains(out, "Commits analyzed: 1\n") {
+		t.Errorf("esperava 'Commits analyzed: 1':\n%s", out)
 	}
 }
 
@@ -192,7 +192,7 @@ func TestDryRunWithoutCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create -d sem credenciais falhou: %v\n%s", err, out)
 	}
-	if !strings.Contains(string(out), "A nova tag a ser criada seria: v1.0.1") {
+	if !strings.Contains(string(out), "Tag that would be created: v1.0.1") {
 		t.Errorf("versão proposta ausente:\n%s", out)
 	}
 }
@@ -246,7 +246,7 @@ func TestCreateJSON(t *testing.T) {
 func TestErrorEndsWithNewline(t *testing.T) {
 	dir := repo(t, "commit:feat: a")
 	out, code := run(t, dir, "create", "--output", "xml")
-	if code == 0 || !strings.HasSuffix(out, "\n") || !strings.Contains(out, "--output inválido") {
+	if code == 0 || !strings.HasSuffix(out, "\n") || !strings.Contains(out, "invalid --output") {
 		t.Errorf("código %d, saída %q", code, out)
 	}
 }
@@ -349,4 +349,32 @@ func gitOut(t *testing.T, dir string, args ...string) string {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
 	}
 	return strings.TrimSpace(string(out))
+}
+
+// 002 AC-6: every message of the CLI and of the Action is in English (#57).
+func TestToolSpeaksEnglish(t *testing.T) {
+	accented := regexp.MustCompile(`[ãõáéíóúâêôçÃÕÁÉÍÓÚÂÊÔÇ]`)
+	files := []string{"action.yml", "main.go"}
+	for _, dir := range []string{"cmd", "internal"} {
+		err := filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {
+			if err == nil && !d.IsDir() && strings.HasSuffix(p, ".go") && !strings.HasSuffix(p, "_test.go") {
+				files = append(files, p)
+			}
+			return err
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i, line := range strings.Split(string(data), "\n") {
+			if accented.MatchString(line) {
+				t.Errorf("%s:%d em português: %s", f, i+1, strings.TrimSpace(line))
+			}
+		}
+	}
 }

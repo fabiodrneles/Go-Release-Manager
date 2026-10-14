@@ -45,39 +45,39 @@ func plan(o planOptions) (Plan, error) {
 		ref = "HEAD"
 	}
 	if o.releaseAs != "" && channel != "" {
-		return Plan{}, fmt.Errorf("use --release-as ou --pre-release, não os dois")
+		return Plan{}, fmt.Errorf("use --release-as or --pre-release, not both")
 	}
 	sha, err := git.ShortSHA(ref)
 	if err != nil {
-		return Plan{}, fmt.Errorf("--ref %q não é um commit: %w", ref, err)
+		return Plan{}, fmt.Errorf("--ref %q is not a commit: %w", ref, err)
 	}
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return Plan{}, fmt.Errorf("erro ao carregar configuração %s: %w", config.FileName, err)
+		return Plan{}, fmt.Errorf("failed to load %s: %w", config.FileName, err)
 	}
 	merged, err := git.MergedTags(ref)
 	if err != nil {
-		return Plan{}, fmt.Errorf("erro ao listar as tags: %w", err)
+		return Plan{}, fmt.Errorf("failed to list the tags: %w", err)
 	}
 	allTags, err := git.AllTags()
 	if err != nil {
-		return Plan{}, fmt.Errorf("erro ao listar as tags: %w", err)
+		return Plan{}, fmt.Errorf("failed to list the tags: %w", err)
 	}
 	base := semver.LatestStable(merged)
-	log.Printf(color.GreenString("Última versão estável encontrada: %s"), shown(base))
+	log.Printf(color.GreenString("Latest stable version: %s"), shown(base))
 
 	commits, err := git.GetCommitsSince(base, ref)
 	if err != nil {
-		return Plan{}, fmt.Errorf("erro ao obter commits: %w", err)
+		return Plan{}, fmt.Errorf("failed to read the commits: %w", err)
 	}
-	log.Printf("Analisando %d commits desde a tag %s...", len(commits), shown(base))
+	log.Printf("Analyzing %d commit(s) since tag %s...", len(commits), shown(base))
 	if channel != "" {
-		log.Printf(color.CyanString("Modo de pré-release ativado. Canal: %s"), channel)
+		log.Printf(color.CyanString("Pre-release channel: %s"), channel)
 	}
 
 	next, inc, err := semver.DetermineNextVersion(cfg, base, commits, channel, allTags)
 	if err != nil {
-		return Plan{}, fmt.Errorf("erro ao determinar a próxima versão: %w", err)
+		return Plan{}, fmt.Errorf("failed to compute the next version: %w", err)
 	}
 	p := Plan{Previous: base, Commits: len(commits), Channel: channel, Ref: sha, Increment: inc.String(), increment: inc}
 	if o.releaseAs != "" {
@@ -96,7 +96,7 @@ func plan(o planOptions) (Plan, error) {
 
 func shown(tag string) string {
 	if tag == "" {
-		return "(nenhuma)"
+		return "(none)"
 	}
 	return tag
 }

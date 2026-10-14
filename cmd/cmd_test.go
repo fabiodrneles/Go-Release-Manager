@@ -72,9 +72,9 @@ func TestPlan(t *testing.T) {
 		t.Errorf("forçada: %+v %v", p, err)
 	}
 	for o, want := range map[planOptions]string{
-		{releaseAs: "v3.0.0", channel: "rc"}: "não os dois",
-		{ref: "nope"}:                        "não é um commit",
-		{releaseAs: "v0.1.0"}:                "precisa ser maior",
+		{releaseAs: "v3.0.0", channel: "rc"}: "not both",
+		{ref: "nope"}:                        "is not a commit",
+		{releaseAs: "v0.1.0"}:                "must be higher",
 	} {
 		if _, err := plan(o); err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("%+v: %v, quer %q", o, err, want)
@@ -83,7 +83,7 @@ func TestPlan(t *testing.T) {
 	if err := os.WriteFile(".go-releaserc.yml", []byte("releaseRules: ["), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := plan(planOptions{}); err == nil || !strings.Contains(err.Error(), "configuração") {
+	if _, err := plan(planOptions{}); err == nil || !strings.Contains(err.Error(), "failed to load") {
 		t.Errorf("configuração inválida: %v", err)
 	}
 }
@@ -115,10 +115,10 @@ func TestNext(t *testing.T) {
 func TestCreateDryRun(t *testing.T) {
 	inRepo(t, "commit:feat: one", "tag:v1.0.0", "commit:feat: two")
 	out, err := execute(t, "create", "-d")
-	if err != nil || !strings.Contains(out, "DRY RUN") || !strings.Contains(out, "v1.1.0") || !strings.Contains(out, "Commits analisados: 1") {
+	if err != nil || !strings.Contains(out, "DRY RUN") || !strings.Contains(out, "v1.1.0") || !strings.Contains(out, "Commits analyzed: 1") {
 		t.Errorf("%q %v", out, err)
 	}
-	if out, _ = execute(t, "create", "-d", "-p", "beta"); !strings.Contains(out, "Canal de pré-release: beta") {
+	if out, _ = execute(t, "create", "-d", "-p", "beta"); !strings.Contains(out, "Pre-release channel: beta") {
 		t.Errorf("canal: %q", out)
 	}
 	out, err = execute(t, "create", "-d", "-o", "json")
@@ -184,7 +184,7 @@ func TestCreatePushesTag(t *testing.T) {
 	}
 	gitRun(t, "commit", "-q", "--allow-empty", "-m", "fix: three")
 	gitRun(t, "remote", "set-url", "origin", filepath.Join(t.TempDir(), "missing.git"))
-	if _, err := execute(t, "create"); err == nil || !strings.Contains(err.Error(), "empurrar") {
+	if _, err := execute(t, "create"); err == nil || !strings.Contains(err.Error(), "failed to push") {
 		t.Errorf("push falho: %v", err)
 	}
 }

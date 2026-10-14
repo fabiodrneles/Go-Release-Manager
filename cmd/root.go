@@ -10,19 +10,16 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "go-release-manager",
-	Short: "", // Será preenchido no init
-	Long:  "", // Será preenchido no init
+	Short: "", // set in init
+	Long:  "", // set in init
 }
 
 func init() {
-	// --- 1. Definir os estilos de cor ---
-	// Cor para o Título ASCII (Ciano, Negrito)
+	// Banner in bold cyan, tagline in yellow, description in blue.
 	cTitle := color.New(color.FgCyan, color.Bold)
 
-	// Cor para o Slogan (Amarelo)
 	cTagline := color.New(color.FgYellow)
 
-	// Cor para a descrição (Branco Padrão)
 	cDesc := color.New(color.FgBlue)
 
 	asciiArt := cTitle.Sprintf(`
@@ -35,18 +32,13 @@ func init() {
    ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝
 `)
 
-	// --- 3. Criar Slogan e Descrição ---
-	tagline := cTagline.Sprint("\n  Automatize seu versionamento e releases com Conventional Commits.")
+	tagline := cTagline.Sprint("\n  Automate your versioning and releases with Conventional Commits.")
 	description := cDesc.Sprint(`
-    Esta ferramenta lê a última tag, analisa os commits desde então e
-    determina o próximo incremento de versão (Major, Minor ou Patch).`)
+    This tool reads the latest tag, analyzes the commits since then and
+    determines the next version increment (Major, Minor or Patch).`)
 
-	// --- 4. Definir o Short e Long do rootCmd ---
+	rootCmd.Short = color.CyanString("A CLI that automates semantic versioning and releases.")
 
-	// Short: Uma única linha, como antes
-	rootCmd.Short = color.CyanString("Uma CLI para automatizar o versionamento semântico e releases.")
-
-	// Long: A versão "profissional" com ASCII art
 	rootCmd.Long = fmt.Sprintf("%s\n%s\n%s", asciiArt, tagline, description)
 }
 
@@ -61,7 +53,7 @@ func Execute(version, commit string) {
 	rootCmd.SilenceUsage = true
 	rootCmd.SilenceErrors = true
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, color.RedString("Erro: %v", err))
+		fmt.Fprintln(os.Stderr, color.RedString("Error: %v", err))
 		os.Exit(1)
 	}
 }

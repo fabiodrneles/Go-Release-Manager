@@ -108,7 +108,7 @@ func Analyze(cfg *config.Config, commits []string) Increment {
 		header, _, footers := parseCommit(commit)
 		matches := commitRegex.FindStringSubmatch(header)
 		if matches == nil {
-			log.Printf("Commit não convencional, ignorando: [%.70s]", header)
+			log.Printf("Skipping non-conventional commit: [%.70s]", header)
 			continue
 		}
 		inc := rules[matches[1]]
@@ -141,12 +141,12 @@ func DetermineNextVersion(cfg *config.Config, base string, commits []string, cha
 	if base != "" {
 		current = parseTag(base)
 		if current == nil {
-			return "", IncrementNone, fmt.Errorf("a tag base '%s' não é SemVer", base)
+			return "", IncrementNone, fmt.Errorf("base tag '%s' is not SemVer", base)
 		}
 	}
 
 	inc := Analyze(cfg, commits)
-	log.Printf("Análise concluída. Maior incremento: %s", inc)
+	log.Printf("Analysis done. Highest increment: %s", inc)
 	if inc == IncrementNone {
 		return "v" + current.String(), IncrementNone, nil
 	}
@@ -192,16 +192,16 @@ func DetermineNextVersion(cfg *config.Config, base string, commits []string, cha
 func ValidateForced(version, base string, allTags []string) error {
 	v := parseTag(version)
 	if v == nil || !strings.HasPrefix(version, "v") {
-		return fmt.Errorf("--release-as %q não é uma versão SemVer no formato vX.Y.Z", version)
+		return fmt.Errorf("--release-as %q is not a SemVer version in the form vX.Y.Z", version)
 	}
 	for _, t := range allTags {
 		if t == version {
-			return fmt.Errorf("--release-as %s: a tag já existe", version)
+			return fmt.Errorf("--release-as %s: the tag already exists", version)
 		}
 	}
 	if base != "" {
 		if b := parseTag(base); b != nil && !v.GreaterThan(b) {
-			return fmt.Errorf("--release-as %s precisa ser maior que a última versão estável (%s)", version, base)
+			return fmt.Errorf("--release-as %s must be higher than the latest stable version (%s)", version, base)
 		}
 	}
 	return nil

@@ -99,10 +99,10 @@ func TestValidateForced(t *testing.T) {
 	tags := []string{"v1.0.0", "v1.1.0"}
 	for v, want := range map[string]string{
 		"v2.0.0": "",
-		"2.0.0":  "não é uma versão",
-		"vx":     "não é uma versão",
-		"v1.1.0": "já existe",
-		"v0.9.0": "precisa ser maior",
+		"2.0.0":  "is not a SemVer",
+		"vx":     "is not a SemVer",
+		"v1.1.0": "already exists",
+		"v0.9.0": "must be higher",
 	} {
 		err := ValidateForced(v, "v1.1.0", tags)
 		if want == "" && err != nil || want != "" && (err == nil || !strings.Contains(err.Error(), want)) {

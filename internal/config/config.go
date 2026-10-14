@@ -50,12 +50,12 @@ func LoadConfig() (*Config, error) {
 	data, err := os.ReadFile(FileName)
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("Nenhum .go-releaserc.yml encontrado. Usando regras padrão (feat/fix).")
+			log.Println("No .go-releaserc.yml found. Using the default rules (feat/fix).")
 			return Default(), nil
 		}
 		return nil, err
 	}
-	log.Println("Arquivo .go-releaserc.yml encontrado. Carregando regras personalizadas.")
+	log.Println("Found .go-releaserc.yml. Loading custom rules.")
 	return Parse(data)
 }
 
@@ -64,16 +64,16 @@ func LoadConfig() (*Config, error) {
 func Parse(data []byte) (*Config, error) {
 	var file Config
 	if err := yaml.Unmarshal(data, &file); err != nil {
-		return nil, fmt.Errorf("%s inválido: %w", FileName, err)
+		return nil, fmt.Errorf("invalid %s: %w", FileName, err)
 	}
 	cfg := Default()
 	for _, rule := range file.ReleaseRules {
 		release := strings.ToLower(strings.TrimSpace(rule.Release))
 		if rule.Type == "" {
-			return nil, fmt.Errorf("%s: regra sem \"type\"", FileName)
+			return nil, fmt.Errorf("%s: rule without \"type\"", FileName)
 		}
 		if !validReleases[release] {
-			return nil, fmt.Errorf("%s: tipo %q com release %q inválido (use major, minor, patch ou none)", FileName, rule.Type, rule.Release)
+			return nil, fmt.Errorf("%s: type %q has invalid release %q (use major, minor, patch or none)", FileName, rule.Type, rule.Release)
 		}
 		cfg.set(ReleaseRule{Type: rule.Type, Release: release})
 	}

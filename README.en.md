@@ -11,8 +11,6 @@ Automatic semantic versioning from your commits, **without the complexity**.
 
 `go-release-manager` is a lightweight CLI written in Go. It reads the commits since the latest stable version, applies [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and computes (or creates) the next [SemVer](https://semver.org/) tag. Use it on its own, as a GitHub Action, or as the "brain" of a pipeline with [GoReleaser](https://goreleaser.com/). It computes the versions of [sdd-kit](https://github.com/fabiodrneles/sdd-kit).
 
-> The CLI messages are in Portuguese; the commands, flags, exit codes and JSON fields shown here are the same in any language.
-
 ![go-release-manager create --dry-run: the latest tag is v1.2.0, there are three new commits and the next version is v1.3.0](docs/images/dry-run.png)
 
 ## Contents
@@ -22,6 +20,7 @@ Automatic semantic versioning from your commits, **without the complexity**.
 - [Installation](#installation)
 - [Step by step: your first version](#step-by-step-your-first-version)
 - [Commands and flags](#commands-and-flags)
+- [Reading the output](#reading-the-output)
 - [How the version is computed](#how-the-version-is-computed)
 - [Pre-releases](#pre-releases)
 - [Configuration (optional)](#configuration-optional)
@@ -60,7 +59,7 @@ Every [release](https://github.com/fabiodrneles/go-release-manager/releases) shi
 **Linux and macOS** (replace `Linux_x86_64` with `Linux_arm64`, `Darwin_x86_64` or `Darwin_arm64` for your system):
 
 ```text
-VERSION=1.1.1
+VERSION=1.2.0
 BASE=https://github.com/fabiodrneles/go-release-manager/releases/download/v$VERSION
 curl -fsSLO "$BASE/go-release-manager_${VERSION}_Linux_x86_64.tar.gz"
 curl -fsSLO "$BASE/checksums.txt"
@@ -72,7 +71,7 @@ sudo install go-release-manager /usr/local/bin/
 **Windows** (PowerShell):
 
 ```text
-$Version = "1.1.1"
+$Version = "1.2.0"
 $Base = "https://github.com/fabiodrneles/go-release-manager/releases/download/v$Version"
 Invoke-WebRequest "$Base/go-release-manager_${Version}_Windows_x86_64.zip" -OutFile grm.zip
 Invoke-WebRequest "$Base/checksums.txt" -OutFile checksums.txt
@@ -162,6 +161,28 @@ go-release-manager create --release-as v2.0.0
 go-release-manager create --ref 1a2b3c4
 ```
 
+## Reading the output
+
+What each line the tool prints means, and what to do about it.
+
+| The tool prints | What it means |
+|---|---|
+| `No .go-releaserc.yml found. Using the default rules (feat/fix).` | No configuration file; the default rules apply (`feat` → minor, `fix` → patch). See [Configuration](#configuration-optional). |
+| `Found .go-releaserc.yml. Loading custom rules.` | `.go-releaserc.yml` was read and its rules apply. |
+| `Latest stable version: v1.2.0` | The latest stable version, used as the base. `(none)` when there is no tag yet. |
+| `Analyzing 3 commit(s) since tag v1.2.0...` | How many commits since the base were counted. |
+| `Skipping non-conventional commit: [...]` | A commit outside the convention (such as a merge) was skipped. Just a note. |
+| `Pre-release channel: rc` | The version comes out as a pre-release on this channel. |
+| `Analysis done. Highest increment: Minor` | The highest increment among the commits: `None`, `Patch`, `Minor` or `Major`. |
+| `Increment: Minor. Next version: v1.3.0` | The computed next version. |
+| `No relevant change found (...). No release will be created.` | No `feat`, `fix` or breaking change: no new version, and the command exits without error. |
+| `--- DRY RUN ---` … `--- END OF DRY RUN ---` | The simulation summary: nothing was created. `Tag that would be created` is the tag `create` would make. |
+| `Creating git tag 'v1.3.0'...` and `Pushing tag 'v1.3.0' to the remote...` | Without `--dry-run`: the tag is being created and pushed to `origin`. |
+| `✅ Tag v1.3.0 created and pushed.` | Done: the tag is on GitHub, and the repository's release workflow starts. |
+| `Error: ...` | Something stopped the command, and it exits with code 1. The usual causes are in [Troubleshooting](#troubleshooting). |
+
+Diagnostic lines go to stderr. Stdout holds only the result of `next` (the version) and the JSON of `--output json`, so scripts can read stdout without filtering.
+
 ## How the version is computed
 
 ![The commits since v1.2.0 give none, minor and patch; the highest wins and the next tag is v1.3.0](docs/images/how-it-works.en.svg)
@@ -246,7 +267,7 @@ jobs:
         with:
           fetch-depth: 0          # required: without history, the tags are not there
       - id: version
-        uses: fabiodrneles/go-release-manager@v1.1.1
+        uses: fabiodrneles/go-release-manager@v1.2.0
         with:
           create: true            # without it, only computes
       - if: steps.version.outputs.created == 'true'
@@ -255,7 +276,7 @@ jobs:
 
 | Input | Default | What it does |
 |---|---|---|
-| `version` | `latest` | go-release-manager version to install (`v1.1.1`, `latest` or `source`). |
+| `version` | `latest` | go-release-manager version to install (`v1.2.0`, `latest` or `source`). |
 | `create` | `false` | `true` creates and pushes the tag. |
 | `pre-release` | | Pre-release channel (`beta`, `rc`). |
 | `release-as` | | Forces this version (`vX.Y.Z`). |
@@ -307,13 +328,13 @@ In [sdd-kit](https://github.com/fabiodrneles/sdd-kit), go-release-manager decide
 
 | Symptom | Cause and fix |
 |---|---|
-| "Nenhuma mudança relevante encontrada" (no relevant change) | No `feat`, `fix` or breaking change since the latest stable tag. Check the types with `git log --oneline <tag>..HEAD`. |
-| The base is `(nenhuma)` (none), or the version falls back to `v0.x` | The clone has no tags: run `git fetch --tags`, or use `fetch-depth: 0` in `actions/checkout`. |
-| "token de acesso não fornecido" (no access token) | Only `create` without `--dry-run` needs a credential: set `GITHUB_TOKEN` or run `gh auth login`. |
-| "erro ao empurrar tag" (failed to push the tag) | git could not push to `origin`: check the remote (`git remote -v`) and write access. In GitHub Actions, give the job `permissions: contents: write`. |
-| "a tag já existe" (tag already exists) with `--release-as` | The forced version must be new and higher than the latest stable. |
+| "No relevant change found" | No `feat`, `fix` or breaking change since the latest stable tag. Check the types with `git log --oneline <tag>..HEAD`. |
+| The base is `(none)`, or the version falls back to `v0.x` | The clone has no tags: run `git fetch --tags`, or use `fetch-depth: 0` in `actions/checkout`. |
+| "no access token" | Only `create` without `--dry-run` needs a credential: set `GITHUB_TOKEN` or run `gh auth login`. |
+| "failed to push the tag" | git could not push to `origin`: check the remote (`git remote -v`) and write access. In GitHub Actions, give the job `permissions: contents: write`. |
+| "the tag already exists" with `--release-as` | The forced version must be new and higher than the latest stable. |
 | The tag was created, but no release came out | A tag created with the default `GITHUB_TOKEN` does not trigger workflows: see the note in [GitHub Action](#github-action). |
-| "Commit não convencional, ignorando" on stderr | A note, not an error: non-conventional commits (such as merges) do not count toward the version. |
+| "Skipping non-conventional commit" on stderr | A note, not an error: non-conventional commits (such as merges) do not count toward the version. |
 
 ## Development
 

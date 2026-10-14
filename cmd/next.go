@@ -10,10 +10,10 @@ var nextChannel, nextRef string
 
 var nextCmd = &cobra.Command{
 	Use:   "next",
-	Short: "Imprime só a próxima versão (nada se não houver release).",
-	Long: `Calcula a próxima versão sem criar tag e imprime só ela em stdout, para
-uso em scripts e GitHub Actions. Sem mudanças que gerem release, não imprime
-nada e sai com 0. As mensagens de diagnóstico vão para stderr.`,
+	Short: "Print only the next version (nothing when there is no release).",
+	Long: `Compute the next version without creating a tag and print only that version on
+stdout, for scripts and GitHub Actions. When no change calls for a release, print
+nothing and exit with 0. Diagnostic messages go to stderr.`,
 	Example: `  VERSION=$(go-release-manager next)
   go-release-manager next -p rc`,
 	Args: cobra.NoArgs,
@@ -32,6 +32,6 @@ nada e sai com 0. As mensagens de diagnóstico vão para stderr.`,
 
 func init() {
 	rootCmd.AddCommand(nextCmd)
-	nextCmd.Flags().StringVarP(&nextChannel, "pre-release", "p", "", "Canal de pré-release (ex: beta, rc)")
-	nextCmd.Flags().StringVar(&nextRef, "ref", "", "Commit ou branch a analisar (padrão: HEAD)")
+	nextCmd.Flags().StringVarP(&nextChannel, "pre-release", "p", "", "Pre-release channel (e.g. beta, rc)")
+	nextCmd.Flags().StringVar(&nextRef, "ref", "", "Commit or branch to analyze (default: HEAD)")
 }
