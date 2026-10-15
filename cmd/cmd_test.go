@@ -47,7 +47,7 @@ func gitRun(t *testing.T, args ...string) string {
 func execute(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 	dryRun, preReleaseChannel, output, createRef, releaseAs = false, "", "text", "", ""
-	nextChannel, nextRef = "", ""
+	nextChannel, nextRef, nextExplain, explain = "", "", false, false
 	checkPRFlags.title, checkPRFlags.body, checkPRFlags.bodyFile, checkPRFlags.commitsFile = "", "", "", ""
 	checkPRFlags.event, checkPRFlags.merged, checkPRFlags.output = "", "", "text"
 	var out bytes.Buffer
