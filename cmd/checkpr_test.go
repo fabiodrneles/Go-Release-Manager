@@ -104,3 +104,36 @@ func TestCheckPRBodyFileAndAnnotations(t *testing.T) {
 		t.Error("plural")
 	}
 }
+
+// 005 AC-13: --explain lists the commits that decided the increment.
+func TestExplain(t *testing.T) {
+	inRepo(t, "commit:feat: first", "tag:v1.0.0", "commit:fix: small", "commit:feat(api)!: drop v1", "commit:chore: noise\n\nBREAKING CHANGE: gone")
+	out, err := execute(t, "create", "-d", "--explain")
+	if err != nil || !strings.Contains(out, "Decided by:") || !strings.Contains(out, `"!" in the header`) ||
+		!strings.Contains(out, "BREAKING CHANGE footer") || strings.Contains(out, "fix: small") {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	out, err = execute(t, "create", "-d", "-o", "json", "--explain")
+	if err != nil || !strings.Contains(out, `"reasons":[`) || !strings.Contains(out, `"increment":"Major"`) {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	if out, err = execute(t, "create", "-d", "-o", "json"); err != nil || strings.Contains(out, "reasons") {
+		t.Errorf("without --explain: %v\n%s", err, out)
+	}
+	out, err = execute(t, "next", "--explain")
+	if err != nil || !strings.Contains(out, "v2.0.0") || !strings.Contains(out, "Decided by:") {
+		t.Errorf("next: %v\n%s", err, out)
+	}
+}
+
+func TestExplainMinorAndNone(t *testing.T) {
+	inRepo(t, "commit:feat: a", "tag:v1.0.0", "commit:fix: b", "commit:feat: c")
+	out, err := execute(t, "next", "--explain")
+	if err != nil || !strings.Contains(out, `type "feat" is a minor`) || strings.Contains(out, "fix: b") {
+		t.Fatalf("%v\n%s", err, out)
+	}
+	inRepo(t, "commit:feat: a", "tag:v1.0.0", "commit:docs: b")
+	if out, err = execute(t, "next", "--explain"); err != nil || strings.Contains(out, "Decided by") {
+		t.Errorf("%v\n%s", err, out)
+	}
+}
