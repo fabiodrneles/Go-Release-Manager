@@ -1,0 +1,62 @@
+name: Post-merge check
+
+# Spec 005 AC-15: depois do merge, o commit que entrou na main precisa manter a
+# quebra de compatibilidade que o PR anunciou; se perdeu, abre uma issue antes
+# da próxima release.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit da main a verificar (padrão o último)
+        default: ""
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+
+jobs:
+  post-merge:
+    name: Quebra preservada no merge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.sha || github.sha }}
+      - name: Encontrar o PR do commit
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ inputs.sha || github.sha }}
+        run: |
+          n=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/pulls" --jq '[.[] | select(.merged_at != null)][0].number // empty')
+          echo "number=$n" >> "$GITHUB_OUTPUT"
+          [ -n "$n" ] || echo "O commit $SHA não veio de um PR: nada a comparar."
+      - uses: actions/setup-go@v7
+        if: steps.pr.outputs.number != ''
+        with:
+          go-version-file: go.mod
+      - name: check-pr --merged
+        id: check
+        if: steps.pr.outputs.number != ''
+        uses: ./check-pr
+        with:
+          version: source
+          pull-request: ${{ steps.pr.outputs.number }}
+          merged: HEAD
+      - name: Abrir issue
+        if: failure() && steps.check.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.pr.outputs.number }}
+          SHA: ${{ inputs.sha || github.sha }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body=$(printf '%s\n\n%s\n\n%s\n' \
+            "O PR #$PR anunciou uma quebra de compatibilidade, mas o commit $SHA que entrou na \`main\` não a mantém (sem \`!\` no título nem rodapé \`BREAKING CHANGE:\`). A próxima versão sairia sem o major." \
+            "Corrija antes da release: um commit vazio com a quebra (ex.: \`git commit --allow-empty -m 'feat!: ...' -m 'BREAKING CHANGE: ...'\`) ou \`go-release-manager create --release-as vX.0.0\`." \
+            "Execução: $RUN")
+          gh issue create --title "Quebra de compatibilidade perdida no merge do #$PR" --body "$body"
