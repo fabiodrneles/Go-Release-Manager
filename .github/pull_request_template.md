@@ -24,4 +24,4 @@ Closes # · Épico # · Spec <!-- ex.: Closes #12 · Épico #10 · Spec 002 (use
 - [ ] Testes cobrem os critérios de aceite deste PR
 - [ ] Spec atualizada (se o comportamento mudou)
 - [ ] README/docs atualizados (se a interface mudou)
-- [ ] Mudança incompatível sinalizada com `!` no título e explicada acima
+- [ ] Mudança incompatível? Se sim: `!` no título **e** um rodapé `BREAKING CHANGE: ...` no fim da descrição (o squash merge guarda o título; o `check-pr` confere)

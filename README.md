@@ -28,6 +28,7 @@ O `go-release-manager` é uma CLI leve, escrita em Go, que lê os commits desde 
 - [Configuração (opcional)](#configuração-opcional)
 - [Saída JSON](#saída-json)
 - [GitHub Action](#github-action)
+- [Squash merges e quebras de compatibilidade](#squash-merges-e-quebras-de-compatibilidade)
 - [Release completa com o GoReleaser](#release-completa-com-o-goreleaser)
 - [Com o sdd-kit](#com-o-sdd-kit)
 - [Dicas](#dicas)
@@ -134,6 +135,7 @@ O push da tag dispara o workflow de release do seu repositório (veja [Release c
 |---|---|
 | `create` | Calcula a próxima versão, cria a tag e a empurra para o `origin`. Com `--dry-run`, só mostra. |
 | `next` | Imprime só a próxima versão no stdout (nada, se não há release), para scripts. Nunca cria tag. |
+| `check-pr` | Confere o título do PR e as quebras de compatibilidade antes de um squash merge (veja [Squash merges](#squash-merges-e-quebras-de-compatibilidade)). |
 | `--version` | A versão do binário. |
 | `completion` | Gera o autocompletar para bash, zsh, fish ou PowerShell. |
 
@@ -143,6 +145,7 @@ O push da tag dispara o workflow de release do seu repositório (veja [Release c
 | `-p`, `--pre-release CANAL` | `create`, `next` | Pré-release do canal (`beta`, `rc`, ...). |
 | `-o`, `--output text\|json` | `create` | Formato do resultado; `json` para automação. |
 | `--release-as vX.Y.Z` | `create` | Usa esta versão no lugar da calculada (maior que a última estável e ainda inexistente). |
+| `--explain` | `create`, `next` | Lista os commits que decidiram o incremento (no `next`, no stderr). |
 | `--ref COMMIT` | `create`, `next` | Analisa e cria a tag nesse commit ou branch, em vez do `HEAD`. |
 
 ```bash
@@ -298,6 +301,62 @@ jobs:
 > [!IMPORTANT]
 > Uma tag criada com o `GITHUB_TOKEN` padrão **não dispara** outros workflows (regra do GitHub). Para publicar a release, chame o build no mesmo workflow (como na seção abaixo) ou passe em `token` um token de GitHub App ou um PAT.
 
+## Squash merges e quebras de compatibilidade
+
+Num squash merge, só a mensagem final do commit decide a versão. Se o `BREAKING CHANGE:` ficou só na descrição do PR ou num dos commits espremidos, e o título não tem `!`, a versão sai minor quando deveria ser major. O go-release-manager fecha essa brecha em quatro camadas:
+
+1. **Configure o squash no GitHub:** em *Settings → General → Pull Requests → Allow squash merging*, escolha **Default to pull request title and description**. Assim o título e a descrição do PR viram a mensagem do commit, e um rodapé `BREAKING CHANGE:` no fim da descrição sobrevive. Sem isso, um PR de um commit só usa a mensagem desse commit, não o título.
+2. **Valide o PR antes do merge com `check-pr`:** ele falha quando uma quebra anunciada em qualquer lugar do PR não está no título, e sugere o título correto. Também avisa de rodapé fora do último parágrafo, de `BREAKING CHANGES:` (com S, que não conta) e de PR de um commit só.
+3. **Rede de segurança depois do merge:** o workflow compara o commit que entrou na `main` com o PR (`check-pr --merged`) e abre uma issue se a quebra se perdeu, antes da próxima release.
+4. **Entenda a versão com `--explain`:** `create` e `next` listam os commits que decidiram o incremento e a regra de cada um.
+
+> [!TIP]
+> **Guia completo de boas práticas:** [Squash merges sem perder quebras de compatibilidade](docs/squash-merges.md) explica o que o GitHub guarda em cada configuração, como escrever o PR (exemplos bons e ruins), a configuração passo a passo e o que fazer quando a quebra já se perdeu.
+
+```bash
+# O título perde a quebra anunciada na descrição: sai com código 1 e sugere "feat!: drop --legacy"
+go-release-manager check-pr --title "feat: drop --legacy" --body "BREAKING CHANGE: --legacy was removed" || echo "bloqueado, como esperado"
+
+# O título com "!" passa
+go-release-manager check-pr --title "feat!: drop --legacy" --body "BREAKING CHANGE: --legacy was removed"
+
+# Quais commits decidiram a versão
+go-release-manager create --dry-run --explain
+```
+
+```text
+Pull request: feat: drop --legacy
+Breaking change announced in: PR description
+✗ [breaking-not-in-title] the pull request announces a breaking change (PR description), but the title has no "!", and the title is what a squash merge keeps: use "feat!: drop --legacy"
+1 error, 0 warnings
+```
+
+Opções do `check-pr`: `--title` e `--body`/`--body-file` (`-` lê do stdin), `--commits-file` (JSON com a lista das mensagens dos commits), `--github-event` (o `$GITHUB_EVENT_PATH` de um evento `pull_request`), `--merged REF` e `-o json` (campos `ok`, `title`, `breaking`, `sources`, `suggested_title` e `findings`). Código de saída 0 sem erros e 1 com erro; avisos não reprovam.
+
+No GitHub Actions, use a Action `check-pr`. Ela lê título e descrição do arquivo do evento (nunca do script, então um título malicioso não injeta código) e busca os commits do PR pela API:
+
+```yaml
+name: PR check
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  check-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fabiodrneles/go-release-manager/check-pr@v1.3.0
+```
+
+Para bloquear o merge, marque esse check como obrigatório em *Settings → Branches* (proteção da `main`). A rede de segurança pós-merge está pronta em [post-merge-check.yml](.github/workflows/post-merge-check.yml): copie-a e troque `uses: ./check-pr` com `version: source` por `uses: fabiodrneles/go-release-manager/check-pr@v1.3.0`.
+
+O que fica de fora: a ferramenta detecta quebras **declaradas** (com `!` ou `BREAKING CHANGE:`) em algum lugar do PR. Uma quebra que ninguém anunciou exige comparar a API pública entre versões, o que ainda não é feito.
+
+> [!NOTE]
+> **Runners macOS:** o download de actions (como `actions/setup-go`) às vezes falha no macOS com "Failed to download archive" na etapa *Set up job*, antes de qualquer passo do seu workflow. É uma instabilidade do GitHub, não do go-release-manager: re-execute o job. As Actions `go-release-manager` e `check-pr` com `version: latest` ou uma versão fixa não precisam do `setup-go`, só `version: source` precisa.
+
 ## Release completa com o GoReleaser
 
 O fluxo que este repositório usa para se publicar, e que o sdd-kit usa nos projetos que adotam o kit:
@@ -319,7 +378,7 @@ No [sdd-kit](https://github.com/fabiodrneles/sdd-kit), o go-release-manager deci
 ## Dicas
 
 - **Rode sempre `--dry-run` antes:** ele mostra a base, os commits analisados, o incremento e a tag, sem escrever nada e sem token.
-- **Escreva o tipo certo no commit:** a versão sai dele. Num PR com squash, o título do PR vira o commit, então vale validar o título no CI.
+- **Escreva o tipo certo no commit:** a versão sai dele. Num PR com squash, o título do PR vira o commit: valide-o com o [`check-pr`](#squash-merges-e-quebras-de-compatibilidade).
 - **Mudança incompatível:** marque com `!` (`feat!: remove --legacy`) ou com um rodapé `BREAKING CHANGE: ...`. Em `0.x`, ela sobe a minor, conforme o SemVer.
 - **Em scripts, use `next`:** `VERSION=$(go-release-manager next)` e teste se ficou vazio antes de publicar.
 - **No CI, faça checkout com `fetch-depth: 0`:** um clone raso não tem as tags, e a base vira `v0.0.0`.
