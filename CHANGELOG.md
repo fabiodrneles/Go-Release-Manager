@@ -4,6 +4,15 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-15
+
+### Adicionado
+
+- check-pr validates PR titles and breaking changes (#66)
+- --explain lists the commits that decided the increment (#67)
+- check-pr Action and a PR check workflow (#68)
+- post-merge check opens an issue when a squash lost the breaking change (#69)
+
 ## [1.2.0] - 2026-10-14
 
 ### Modificado
