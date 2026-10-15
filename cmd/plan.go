@@ -22,6 +22,8 @@ type Plan struct {
 	Ref       string `json:"ref"`
 	Forced    bool   `json:"forced"`
 	Created   bool   `json:"created"`
+	// Reasons are the commits that set the increment (only with --explain).
+	Reasons []semver.Reason `json:"reasons,omitempty"`
 
 	increment semver.Increment
 }
@@ -35,6 +37,7 @@ type planOptions struct {
 	channel   string
 	ref       string
 	releaseAs string
+	explain   bool
 }
 
 // plan computes the next version for the repository in the current directory.
@@ -80,6 +83,9 @@ func plan(o planOptions) (Plan, error) {
 		return Plan{}, fmt.Errorf("failed to compute the next version: %w", err)
 	}
 	p := Plan{Previous: base, Commits: len(commits), Channel: channel, Ref: sha, Increment: inc.String(), increment: inc}
+	if o.explain {
+		p.Reasons = semver.Explain(cfg, commits)
+	}
 	if o.releaseAs != "" {
 		if err := semver.ValidateForced(o.releaseAs, base, allTags); err != nil {
 			return Plan{}, err
