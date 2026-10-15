@@ -8,6 +8,7 @@ import (
 
 	"github.com/fabiodrneles/go-release-manager/internal/auth"
 	"github.com/fabiodrneles/go-release-manager/internal/git"
+	"github.com/fabiodrneles/go-release-manager/internal/semver"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -19,6 +20,7 @@ var (
 	output            string
 	createRef         string
 	releaseAs         string
+	explain           bool
 )
 
 var createCmd = &cobra.Command{
@@ -45,7 +47,7 @@ built by GoReleaser in the GitHub Action the tag triggers.`),
 		if output != "text" && output != "json" {
 			return fmt.Errorf("invalid --output %q (use text or json)", output)
 		}
-		p, err := plan(planOptions{channel: preReleaseChannel, ref: createRef, releaseAs: releaseAs})
+		p, err := plan(planOptions{channel: preReleaseChannel, ref: createRef, releaseAs: releaseAs, explain: explain})
 		if err != nil {
 			return err
 		}
@@ -84,6 +86,17 @@ built by GoReleaser in the GitHub Action the tag triggers.`),
 	},
 }
 
+// writeReasons lists the commits that decided the increment (--explain).
+func writeReasons(w io.Writer, rs []semver.Reason) {
+	if len(rs) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintln(w, "Decided by:")
+	for _, r := range rs {
+		_, _ = fmt.Fprintf(w, "  %s  %s  (%s)\n", r.Increment, r.Commit, r.Why)
+	}
+}
+
 // report writes the result: JSON alone on stdout, or the dry-run summary.
 func report(w io.Writer, p Plan) error {
 	if output == "json" {
@@ -100,6 +113,7 @@ func report(w io.Writer, p Plan) error {
 	}
 	_, _ = fmt.Fprintf(w, "Commits analyzed: %d\n", p.Commits)
 	_, _ = fmt.Fprintf(w, "Increment: %s\n", color.MagentaString(p.Increment))
+	writeReasons(w, p.Reasons)
 	_, _ = fmt.Fprintf(w, "Tag that would be created: %s\n", color.MagentaString(p.Next))
 	_, _ = fmt.Fprintln(w, color.CyanString("--- END OF DRY RUN ---"))
 	return nil
@@ -111,5 +125,6 @@ func init() {
 	createCmd.Flags().StringVarP(&preReleaseChannel, "pre-release", "p", "", "Create a pre-release on this channel (e.g. beta, rc)")
 	createCmd.Flags().StringVarP(&output, "output", "o", "text", "Result format: text or json")
 	createCmd.Flags().StringVar(&createRef, "ref", "", "Commit or branch to analyze and tag (default: HEAD)")
+	createCmd.Flags().BoolVar(&explain, "explain", false, "List the commits that decided the increment")
 	createCmd.Flags().StringVar(&releaseAs, "release-as", "", "Use this version (vX.Y.Z) instead of the computed one")
 }
