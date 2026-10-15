@@ -310,6 +310,9 @@ Num squash merge, só a mensagem final do commit decide a versão. Se o `BREAKIN
 3. **Rede de segurança depois do merge:** o workflow compara o commit que entrou na `main` com o PR (`check-pr --merged`) e abre uma issue se a quebra se perdeu, antes da próxima release.
 4. **Entenda a versão com `--explain`:** `create` e `next` listam os commits que decidiram o incremento e a regra de cada um.
 
+> [!TIP]
+> **Guia completo de boas práticas:** [Squash merges sem perder quebras de compatibilidade](docs/squash-merges.md) explica o que o GitHub guarda em cada configuração, como escrever o PR (exemplos bons e ruins), a configuração passo a passo e o que fazer quando a quebra já se perdeu.
+
 ```bash
 # O título perde a quebra anunciada na descrição: sai com código 1 e sugere "feat!: drop --legacy"
 go-release-manager check-pr --title "feat: drop --legacy" --body "BREAKING CHANGE: --legacy was removed" || echo "bloqueado, como esperado"

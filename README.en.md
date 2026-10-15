@@ -308,6 +308,9 @@ In a squash merge, only the final commit message decides the version. If the `BR
 3. **Safety net after the merge:** the workflow compares the commit that landed on `main` with its PR (`check-pr --merged`) and opens an issue if the break was lost, before the next release.
 4. **Understand the version with `--explain`:** `create` and `next` list the commits that decided the increment and the rule behind each one.
 
+> [!TIP]
+> **Full best-practices guide:** [Squash merges without losing breaking changes](docs/squash-merges.en.md) covers what GitHub keeps in each setting, how to write the PR (good and bad examples), the step-by-step setup, and what to do when the break was already lost.
+
 ```bash
 # The title loses the break announced in the description: exits with 1 and suggests "feat!: drop --legacy"
 go-release-manager check-pr --title "feat: drop --legacy" --body "BREAKING CHANGE: --legacy was removed" || echo "blocked, as expected"
