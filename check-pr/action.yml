@@ -1,0 +1,104 @@
+name: go-release-manager check-pr
+description: Fails a pull request whose title would lose a breaking change in a squash merge.
+author: Fabio Dorneles
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  version:
+    description: go-release-manager version to install (e.g. v1.3.0), "latest" or "source" (builds the Action's own code; needs Go).
+    default: latest
+  merged:
+    description: Commit that landed on the main branch (for example HEAD); checks that it kept the breaking change the pull request announced.
+    default: ""
+  pull-request:
+    description: Pull request number; default is the one of the triggering pull_request event.
+    default: ""
+  token:
+    description: Token to download the release and read the pull request commits.
+    default: ${{ github.token }}
+
+outputs:
+  result:
+    description: The check result as JSON (ok, title, breaking, sources, suggested_title, findings).
+    value: ${{ steps.run.outputs.result }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install go-release-manager
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        repo=fabiodrneles/go-release-manager
+        dir="$RUNNER_TEMP/go-release-manager"
+        mkdir -p "$dir"
+        if [ "$VERSION" = source ]; then
+          (cd "$GITHUB_ACTION_PATH/.." && go build -o "$dir/go-release-manager" .)
+          echo "$dir" >> "$GITHUB_PATH"
+          exit 0
+        fi
+        if [ "$VERSION" = latest ]; then
+          VERSION=$(gh api "repos/$repo/releases/latest" --jq .tag_name)
+        fi
+        case "$RUNNER_OS" in
+          Linux) os=Linux ext=tar.gz ;;
+          macOS) os=Darwin ext=tar.gz ;;
+          Windows) os=Windows ext=zip ;;
+          *) echo "unsupported OS: $RUNNER_OS" >&2; exit 1 ;;
+        esac
+        case "$RUNNER_ARCH" in
+          X64) arch=x86_64 ;;
+          ARM64) arch=arm64 ;;
+          *) echo "unsupported architecture: $RUNNER_ARCH" >&2; exit 1 ;;
+        esac
+        asset="go-release-manager_${VERSION#v}_${os}_${arch}.${ext}"
+        gh release download "$VERSION" -R "$repo" -p "$asset" -p checksums.txt -D "$dir" --clobber
+        sum=sha256sum
+        command -v sha256sum >/dev/null || sum="shasum -a 256"
+        (cd "$dir" && grep " $asset\$" checksums.txt | $sum -c -)
+        if [ "$ext" = zip ]; then
+          if command -v unzip >/dev/null; then unzip -o -q "$dir/$asset" -d "$dir"
+          else pwsh -NoProfile -Command "Expand-Archive -Force '$dir/$asset' '$dir'"; fi
+        else
+          tar xzf "$dir/$asset" -C "$dir"
+        fi
+        echo "$dir" >> "$GITHUB_PATH"
+
+    - name: Check the pull request
+      id: run
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        MERGED: ${{ inputs.merged }}
+        PR_NUMBER: ${{ inputs.pull-request }}
+        REPO: ${{ github.repository }}
+        EVENT: ${{ github.event_path }}
+      run: |
+        set -euo pipefail
+        # The title and the description are read from the event file, never
+        # interpolated into the script, so a hostile title cannot inject code.
+        [ -n "$PR_NUMBER" ] || PR_NUMBER=$(jq -r '.pull_request.number // empty' "$EVENT")
+        if [ -z "$PR_NUMBER" ]; then
+          echo "::error::run on a pull_request event or set the pull-request input" >&2
+          exit 2
+        fi
+        # Outside a pull_request event (e.g. a push to main), read the title
+        # and the description from the API into an event-shaped file.
+        if ! jq -e '.pull_request' "$EVENT" >/dev/null 2>&1; then
+          EVENT="$RUNNER_TEMP/pr-event.json"
+          gh api "repos/$REPO/pulls/$PR_NUMBER" | jq '{pull_request: {title, body, number}}' > "$EVENT"
+        fi
+        commits="$RUNNER_TEMP/pr-commits.json"
+        gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/commits" | jq -s '[.[][] | .commit.message]' > "$commits"
+        args=(check-pr --github-event "$EVENT" --commits-file "$commits")
+        [ -z "$MERGED" ] || args+=(--merged "$MERGED")
+        code=0
+        go-release-manager "${args[@]}" || code=$?
+        result=$(go-release-manager "${args[@]}" --output json 2>/dev/null || true)
+        echo "result=$(jq -c . <<<"$result" 2>/dev/null || true)" >> "$GITHUB_OUTPUT"
+        exit "$code"

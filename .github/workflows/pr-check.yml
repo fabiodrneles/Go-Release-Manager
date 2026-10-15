@@ -1,0 +1,25 @@
+name: PR check
+
+# Spec 005 AC-14: o título do PR não pode perder uma quebra de compatibilidade
+# anunciada na descrição ou nos commits, porque o squash merge guarda só o título.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-pr:
+    name: Título e quebras de compatibilidade
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: ./check-pr
+        with:
+          version: source
