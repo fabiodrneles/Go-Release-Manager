@@ -32,6 +32,6 @@ Convenções: `MUST`/`SHOULD`/`MAY` seguem a RFC 2119. Prioridades: **P0** (bloq
 | 002 | [Interface de linha de comando](002-cli/spec.md) | P1 | Done |
 | 003 | [CI e pipeline de release](003-release-pipeline/spec.md) | P0 | Done |
 | 004 | [Controle da versão e do commit da tag](004-release-control/spec.md) | P1 | Done |
-| 005 | [Quebras de compatibilidade em squash merges](005-squash-breaking/spec.md) | P1 | Approved |
+| 005 | [Quebras de compatibilidade em squash merges](005-squash-breaking/spec.md) | P1 | Done |
 
 Status possíveis: `Draft` → `Approved` → `In Progress` → `Done`.

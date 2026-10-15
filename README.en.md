@@ -270,7 +270,7 @@ jobs:
         with:
           fetch-depth: 0          # required: without history, the tags are not there
       - id: version
-        uses: fabiodrneles/go-release-manager@v1.2.0
+        uses: fabiodrneles/go-release-manager@v1.3.0
         with:
           create: true            # without it, only computes
       - if: steps.version.outputs.created == 'true'
@@ -279,7 +279,7 @@ jobs:
 
 | Input | Default | What it does |
 |---|---|---|
-| `version` | `latest` | go-release-manager version to install (`v1.2.0`, `latest` or `source`). |
+| `version` | `latest` | go-release-manager version to install (`v1.3.0`, `latest` or `source`). |
 | `create` | `false` | `true` creates and pushes the tag. |
 | `pre-release` | | Pre-release channel (`beta`, `rc`). |
 | `release-as` | | Forces this version (`vX.Y.Z`). |

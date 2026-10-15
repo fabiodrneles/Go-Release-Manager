@@ -1,7 +1,7 @@
 # 005 — Quebras de compatibilidade em squash merges
 
 - **Prioridade:** P1
-- **Status:** Approved
+- **Status:** Done — entregue na `v1.3.0`
 - **Código afetado:** `cmd/`, `internal/semver`, `internal/prcheck`, `internal/git`, `check-pr/action.yml`, `.github/workflows/`
 - **Origem:** pergunta de um leitor sobre o `BREAKING CHANGE:` em squash merges (épico #60)
 

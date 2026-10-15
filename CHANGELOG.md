@@ -4,6 +4,18 @@ Todas as mudanças relevantes deste projeto. Formato [Keep a Changelog](https://
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-10-15
+
+Não perder quebras de compatibilidade em squash merges (spec 005).
+
+### Adicionado
+
+- Comando `check-pr`: reprova o PR quando uma quebra anunciada na descrição ou em um commit não está no título (o que o squash guarda) e sugere o título certo; avisa de rodapé fora do lugar, `BREAKING CHANGES:` e PR de um commit só; `--merged REF` compara com o commit que entrou na `main`; saída `-o json` (#66).
+- `--explain` no `create` e no `next`: lista os commits que decidiram o incremento e a regra de cada um; no JSON, o campo `reasons` (#67).
+- Action `check-pr` (`fabiodrneles/go-release-manager/check-pr`) e o workflow *PR check*, que roda em todo PR (#68).
+- Workflow *Post-merge check*: abre uma issue quando o commit que entrou na `main` perdeu a quebra que o PR anunciou (#69).
+- Guia de boas práticas [Squash merges sem perder quebras de compatibilidade](docs/squash-merges.md) (PT e EN), seção no README, aviso sobre runners macOS e pergunta no modelo de PR (#70).
+
 ## [1.2.0] - 2026-10-14
 
 ### Modificado

@@ -272,7 +272,7 @@ jobs:
         with:
           fetch-depth: 0          # obrigatório: sem o histórico, as tags não aparecem
       - id: version
-        uses: fabiodrneles/go-release-manager@v1.2.0
+        uses: fabiodrneles/go-release-manager@v1.3.0
         with:
           create: true            # sem isto, só calcula
       - if: steps.version.outputs.created == 'true'
@@ -281,7 +281,7 @@ jobs:
 
 | Input | Padrão | O que faz |
 |---|---|---|
-| `version` | `latest` | Versão do go-release-manager a instalar (`v1.2.0`, `latest` ou `source`). |
+| `version` | `latest` | Versão do go-release-manager a instalar (`v1.3.0`, `latest` ou `source`). |
 | `create` | `false` | `true` cria e empurra a tag. |
 | `pre-release` | | Canal de pré-release (`beta`, `rc`). |
 | `release-as` | | Força esta versão (`vX.Y.Z`). |
