@@ -122,6 +122,43 @@ func Analyze(cfg *config.Config, commits []string) Increment {
 	return highest
 }
 
+// Reason explains why a commit raised the increment (spec 005 FR-8).
+type Reason struct {
+	Increment string `json:"increment"`
+	Commit    string `json:"commit"` // the commit header
+	Why       string `json:"why"`
+}
+
+// Explain lists the commits that determined the highest increment Analyze
+// returns, each with the rule that made it count. It is empty when no commit
+// calls for a release.
+func Explain(cfg *config.Config, commits []string) []Reason {
+	rules := mapConfigToIncrements(cfg.ReleaseRules)
+	highest := Analyze(cfg, commits)
+	var out []Reason
+	if highest == IncrementNone {
+		return out
+	}
+	for _, commit := range commits {
+		header, _, footers := parseCommit(commit)
+		m := commitRegex.FindStringSubmatch(header)
+		if m == nil {
+			continue
+		}
+		inc, why := rules[m[1]], fmt.Sprintf("type %q is a %s in the rules", m[1], strings.ToLower(rules[m[1]].String()))
+		switch {
+		case m[3] == "!":
+			inc, why = IncrementMajor, `"!" in the header`
+		case hasBreakingFooter(footers):
+			inc, why = IncrementMajor, "BREAKING CHANGE footer"
+		}
+		if inc == highest {
+			out = append(out, Reason{Increment: inc.String(), Commit: header, Why: why})
+		}
+	}
+	return out
+}
+
 // Header is a parsed Conventional Commits header: type(scope)!: description.
 type Header struct {
 	Type        string
