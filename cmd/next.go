@@ -7,6 +7,7 @@ import (
 )
 
 var nextChannel, nextRef string
+var nextExplain bool
 
 var nextCmd = &cobra.Command{
 	Use:   "next",
@@ -18,10 +19,11 @@ nothing and exit with 0. Diagnostic messages go to stderr.`,
   go-release-manager next -p rc`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		p, err := plan(planOptions{channel: nextChannel, ref: nextRef})
+		p, err := plan(planOptions{channel: nextChannel, ref: nextRef, explain: nextExplain})
 		if err != nil {
 			return err
 		}
+		writeReasons(cmd.ErrOrStderr(), p.Reasons)
 		if !p.Release() {
 			return nil
 		}
@@ -33,5 +35,6 @@ nothing and exit with 0. Diagnostic messages go to stderr.`,
 func init() {
 	rootCmd.AddCommand(nextCmd)
 	nextCmd.Flags().StringVarP(&nextChannel, "pre-release", "p", "", "Pre-release channel (e.g. beta, rc)")
+	nextCmd.Flags().BoolVar(&nextExplain, "explain", false, "List the commits that decided the increment (on stderr)")
 	nextCmd.Flags().StringVar(&nextRef, "ref", "", "Commit or branch to analyze (default: HEAD)")
 }
