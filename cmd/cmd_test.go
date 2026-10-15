@@ -48,6 +48,8 @@ func execute(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 	dryRun, preReleaseChannel, output, createRef, releaseAs = false, "", "text", "", ""
 	nextChannel, nextRef = "", ""
+	checkPRFlags.title, checkPRFlags.body, checkPRFlags.bodyFile, checkPRFlags.commitsFile = "", "", "", ""
+	checkPRFlags.event, checkPRFlags.merged, checkPRFlags.output = "", "", "text"
 	var out bytes.Buffer
 	rootCmd.SetOut(&out)
 	rootCmd.SetErr(&out)
