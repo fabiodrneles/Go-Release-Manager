@@ -34,3 +34,11 @@ Cada tarefa referencia a spec e os critérios de aceite que ela fecha. Ordem sug
 - [x] **T14** `create --release-as` — 004 FR-1, FR-3, AC-1, AC-2
 - [x] **T15** `--ref`: analisar e criar a tag num commit — 004 FR-2, AC-3
 - [x] **T16** Action com `release-as` e `ref`, e workflow `release-tag.yml` — 004 FR-4, FR-5, AC-4
+
+## Fase 5 — Quebras em squash merges (P1)
+
+- [ ] **T17** `check-pr`: título, quebras e avisos — 005 FR-1..FR-7, AC-1..AC-12 (#61)
+- [ ] **T18** Action `check-pr` e check obrigatório no repositório — 005 FR-9, AC-14 (#62)
+- [ ] **T19** Rede de segurança na `main` depois do merge — 005 FR-5, FR-10, AC-9, AC-15 (#63)
+- [ ] **T20** `--explain` no `create` e no `next` — 005 FR-8, AC-13 (#64)
+- [ ] **T21** README em PT e EN e modelo de PR — 005 FR-11 (#65)

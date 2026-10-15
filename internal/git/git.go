@@ -65,6 +65,15 @@ func GetCommitsSince(tag, ref string) ([]string, error) {
 	return commits, nil
 }
 
+// CommitMessage returns the full message of the commit at ref.
+func CommitMessage(ref string) (string, error) {
+	out, err := runCommand("git", "log", "-1", "--pretty=format:%B", ref)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
+}
+
 // CreateTag creates a lightweight tag at ref.
 func CreateTag(tag, ref string) error {
 	_, err := runCommand("git", "tag", tag, ref)

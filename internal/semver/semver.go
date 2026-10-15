@@ -122,6 +122,34 @@ func Analyze(cfg *config.Config, commits []string) Increment {
 	return highest
 }
 
+// Header is a parsed Conventional Commits header: type(scope)!: description.
+type Header struct {
+	Type        string
+	Scope       string
+	Breaking    bool // the "!" after the type
+	Description string
+}
+
+// ParseHeader parses a commit or pull request title; ok is false when it is
+// not a Conventional Commits header (spec 005 FR-2).
+func ParseHeader(header string) (h Header, ok bool) {
+	m := commitRegex.FindStringSubmatch(strings.TrimSpace(header))
+	if m == nil {
+		return Header{}, false
+	}
+	return Header{Type: m[1], Scope: m[2], Breaking: m[3] == "!", Description: m[4]}, true
+}
+
+// IsBreaking reports whether a full commit message announces a breaking
+// change by the exact rules Analyze uses: a "!" in the header or a
+// BREAKING CHANGE footer. A header that is not Conventional Commits never
+// counts, because Analyze skips such commits (spec 005 FR-7).
+func IsBreaking(commit string) bool {
+	header, _, footers := parseCommit(commit)
+	h, ok := ParseHeader(header)
+	return ok && (h.Breaking || hasBreakingFooter(footers))
+}
+
 func hasBreakingFooter(footers string) bool {
 	for _, line := range strings.Split(footers, "\n") {
 		line = strings.TrimSpace(line)
